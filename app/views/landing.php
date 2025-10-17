@@ -21,7 +21,8 @@ include '../partials/navbar.php';
         </div>
         <div class="hero-image">
             <!-- <img src="public/images/hero-illustration.svg" alt="Writing illustration" onerror="this.src='public/images/placeholder-hero.jpg'"> -->
-    hi        
+    hi seif   
+        
         </div>
     </div>
 </section>
