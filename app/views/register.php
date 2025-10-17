@@ -4,7 +4,7 @@ $pageDescription = 'Create your StoryHub account';
 $pageCSS = 'login.css';
 $pageJS = 'register.js';
 
-include '../partials/header.php';
+include __DIR__ . '/../partials/header.php';
 ?>
 
 <div class="auth-container">

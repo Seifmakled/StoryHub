@@ -4,9 +4,8 @@ $pageDescription = 'Discover amazing articles and stories';
 $pageCSS = 'explore.css';
 $pageJS = 'explore.js';
 
-include '../partials/header.php';
-include '../partials/navbar.php';
-?>
+include __DIR__ . '/../partials/header.php';
+include __DIR__ . '/../partials/navbar.php';?>
 
 <div class="explore-container">
     <!-- Search & Filter Section -->
@@ -179,4 +178,4 @@ include '../partials/navbar.php';
     </aside>
 </div>
 
-<?php include '../partials/footer.php'; ?>
+<?php include __DIR__ . '/../partials/footer.php'; ?>

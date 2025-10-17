@@ -64,7 +64,7 @@ include '../partials/header.php';
             </div>
 
             <div class="auth-links">
-                <a href="index.php?url=landing"><i class="fas fa-arrow-left"></i> Back to Home</a>
+                <a href="/StoryHub/index.php?url=landing"><i class="fas fa-arrow-left"></i> Back to Home</a>
             </div>
         </div>
     </div>
