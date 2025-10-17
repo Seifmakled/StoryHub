@@ -65,5 +65,5 @@ try {
     header("Location: ../../index.php?url=login&error=db_error");
     exit();
 }
-exit();
+
 ?>
