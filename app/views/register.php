@@ -45,7 +45,7 @@ include '../partials/header.php';
 
                 <div id="alertMessage" class="alert" style="display: none;"></div>
 
-                <form id="registerForm" class="auth-form" action="/Blog-Project/app/controllers/registrationController.php" method="POST">
+                <form id="registerForm" class="auth-form" action="/StoryHub/app/controllers/registrationController.php" method="POST">
                     <div class="form-row">
                         <div class="form-group">
                             <label for="fullName">Full Name</label>
