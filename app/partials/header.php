@@ -31,3 +31,5 @@ if (!class_exists('Database')) {
     <?php endif; ?>
 </head>
 <body>
+
+Hello World
