@@ -41,7 +41,7 @@ $isOwnProfile = isset($_SESSION['user_id']) && isset($_GET['id']) && $_SESSION['
 
                 <div class="profile-actions">
                     <?php if ($isOwnProfile): ?>
-                    <button class="btn btn-outline" onclick="window.location.href='index.php?page=settings'">
+                    <button class="btn btn-outline" onclick="window.location.href='index.php?url=settings'">
                         <i class="fas fa-cog"></i> Edit Profile
                     </button>
                     <?php else: ?>

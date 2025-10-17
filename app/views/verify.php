@@ -59,12 +59,12 @@ include '../partials/header.php';
                     </div>
                     <h3>Email Verified!</h3>
                     <p>Your email has been verified successfully. You can now access your account.</p>
-                    <a href="index.php?page=login" class="btn btn-primary">Continue to Sign In</a>
+                    <a href="index.php?url=login" class="btn btn-primary">Continue to Sign In</a>
                 </div>
             </div>
 
             <div class="auth-links">
-                <a href="index.php?page=home"><i class="fas fa-arrow-left"></i> Back to Home</a>
+                <a href="index.php?url=landing"><i class="fas fa-arrow-left"></i> Back to Home</a>
             </div>
         </div>
     </div>
