@@ -40,7 +40,7 @@ include '../partials/header.php';
                     </button>
 
                     <div class="form-footer">
-                        <a href="index.php?page=login"><i class="fas fa-arrow-left"></i> Back to Sign In</a>
+                        <a href="index.php?url=login"><i class="fas fa-arrow-left"></i> Back to Sign In</a>
                     </div>
                 </form>
 
@@ -110,12 +110,12 @@ include '../partials/header.php';
                     </div>
                     <h3>Password Reset Successful!</h3>
                     <p>Your password has been changed successfully.</p>
-                    <a href="index.php?page=login" class="btn btn-primary">Go to Sign In</a>
+                    <a href="index.php?url=login" class="btn btn-primary">Go to Sign In</a>
                 </div>
             </div>
 
             <div class="auth-links">
-                <a href="index.php?page=home"><i class="fas fa-arrow-left"></i> Back to Home</a>
+                <a href="index.php?url=landing"><i class="fas fa-arrow-left"></i> Back to Home</a>
             </div>
         </div>
     </div>

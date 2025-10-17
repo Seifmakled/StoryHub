@@ -29,7 +29,8 @@ try {
     $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
     if (!$user) {
-        header("Location: ../../index.php?url=login&error=invalid_credentials");
+        // a toastie is required here to show invalid login
+        header("Location: ../views/login.php"); 
         exit();
     }
 
@@ -55,7 +56,9 @@ try {
         exit();
         
     } else {
-        header("Location: ../../index.php?url=login&error=invalid_credentials");
+
+        // a toastie is required here to show invalid login
+        header("Location: ../views/login.php"); 
         exit();
     }
 

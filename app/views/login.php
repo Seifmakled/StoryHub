@@ -45,12 +45,12 @@ include '../partials/header.php';
 
                 <div id="alertMessage" class="alert" style="display: none;"></div>
 
-                <form id="loginForm" class="auth-form">
+                <form id="loginForm" class="auth-form" action="/StoryHub/app/controllers/loginController.php" method="POST">
                     <div class="form-group">
-                        <label for="email">Email Address</label>
+                        <label for="email_or_username">Email or Username</label>
                         <div class="input-wrapper">
                             <i class="fas fa-envelope"></i>
-                            <input type="email" id="email" name="email" placeholder="Enter your email" required>
+                            <input type="text" id="email_or_username" name="email_or_username" placeholder="Enter your email or username" required>
                         </div>
                     </div>
 
@@ -70,7 +70,7 @@ include '../partials/header.php';
                             <input type="checkbox" id="remember" name="remember">
                             <span>Remember me</span>
                         </label>
-                        <a href="index.php?page=forgot-password" class="forgot-link">Forgot Password?</a>
+                        <a href="index.php?url=forgot-password" class="forgot-link">Forgot Password?</a>
                     </div>
 
                     <button type="submit" class="btn btn-primary btn-block">
@@ -96,14 +96,13 @@ include '../partials/header.php';
                     </div>
 
                     <div class="form-footer">
-                        <p>Don't have an account? <a href="index.php?page=register">Sign Up</a></p>
+                        <p>Don't have an account? <a href="index.php?url=register">Sign Up</a></p>
                     </div>
                 </form>
             </div>
 
             <div class="auth-links">
-                <a href="index.php?page=home"><i class="fas fa-arrow-left"></i> Back to Home</a>
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        bb    m                     
+                <a href="index.php?url=landing"><i class="fas fa-arrow-left"></i> Back to Home</a>
             </div>
         </div>
     </div>

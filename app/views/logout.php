@@ -4,6 +4,6 @@ $pageCSS = 'landing.css';
 
 session_start();
 session_destroy();
-header('Location: index.php?page=home');
+header('Location: index.php?url=landing');
 exit();
 ?>

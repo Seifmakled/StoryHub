@@ -2,7 +2,7 @@
 /*
 // Check if user is admin
 if (!isset($_SESSION['is_admin']) || !$_SESSION['is_admin']) {
-    header('Location: index.php?page=home');
+    header('Location: index.php?url=landing');
     exit();
 }
  */
@@ -68,11 +68,11 @@ include '../partials/header.php';
         </nav>
 
         <div class="sidebar-footer">
-            <a href="index.php?page=home" class="nav-item">
+            <a href="index.php?url=landing" class="nav-item">
                 <i class="fas fa-home"></i>
                 <span>Back to Site</span>
             </a>
-            <a href="index.php?page=logout" class="nav-item">
+            <a href="index.php?url=logout" class="nav-item">
                 <i class="fas fa-sign-out-alt"></i>
                 <span>Logout</span>
             </a>
