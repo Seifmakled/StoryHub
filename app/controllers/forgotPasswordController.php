@@ -15,10 +15,6 @@ if (isset($_POST['resetCode']) && isset($_POST['email'])) {
     $stmt->execute([$email]);
     $user = $stmt->fetch(PDO::FETCH_ASSOC);
     
-    // Debug: Log the comparison (remove this later)
-    error_log("Submitted code: '$code' (length: " . strlen($code) . ")");
-    error_log("Database code: '" . ($user['reset_token'] ?? 'NULL') . "' (length: " . strlen($user['reset_token'] ?? '') . ")");
-    error_log("Expiry: " . ($user['reset_token_expiry'] ?? 'NULL') . " vs Current: " . date('Y-m-d H:i:s'));
     
     if ($user && $user['reset_token'] === $code && strtotime($user['reset_token_expiry']) > time()) {
         // Code is valid
