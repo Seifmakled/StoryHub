@@ -4,8 +4,8 @@ $pageDescription = 'User profile page';
 $pageCSS = 'profile.css';
 $pageJS = 'profile.js';
 
-include '../partials/header.php';
-include '../partials/navbar.php';
+include __DIR__ . '/../partials/header.php';
+include __DIR__ . '/../partials/navbar.php';
 
 // Mock user data (replace with actual database query)
 $isOwnProfile = isset($_SESSION['user_id']) && isset($_GET['id']) && $_SESSION['user_id'] == $_GET['id'];
