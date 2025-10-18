@@ -4,7 +4,7 @@ $pageDescription = 'Reset your password';
 $pageCSS = 'login.css';
 $pageJS = 'forgot-password.js';
 
-include '../partials/header.php';
+include __DIR__ . '/../partials/header.php';
 ?>
 
 <div class="auth-container">
