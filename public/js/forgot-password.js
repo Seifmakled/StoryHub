@@ -41,61 +41,28 @@ document.addEventListener('DOMContentLoaded', function() {
     // Step 1: Send Reset Code
     if (forgotPasswordForm) {
         forgotPasswordForm.addEventListener('submit', function(e) {
-            e.preventDefault();
-            
             const email = document.getElementById('email').value.trim();
             
             if (!email || !isValidEmail(email)) {
+                e.preventDefault();
                 showAlert('Please enter a valid email address');
                 return;
             }
-
-            const btn = this.querySelector('button[type="submit"]');
-            btn.classList.add('loading');
-            
-            setTimeout(() => {
-                btn.classList.remove('loading');
-                showAlert('Verification code sent to your email!', 'success');
-                
-                // Switch to verification form
-                forgotPasswordForm.style.display = 'none';
-                verifyCodeForm.style.display = 'block';
-                
-                // Focus first input
-                document.getElementById('code1').focus();
-            }, 1500);
+            // Form will submit normally to the controller
         });
     }
 
     // Step 2: Verify Code
-    setupVerificationInputs();
-    
     if (verifyCodeForm) {
         verifyCodeForm.addEventListener('submit', function(e) {
-            e.preventDefault();
-            
-            const code = getVerificationCode();
+            const code = document.getElementById('resetCode').value.trim();
             
             if (code.length !== 6) {
-                showAlert('Please enter the complete verification code');
+                e.preventDefault();
+                showAlert('Please enter the complete 6-digit verification code');
                 return;
             }
-
-            const btn = this.querySelector('button[type="submit"]');
-            btn.classList.add('loading');
-            
-            setTimeout(() => {
-                btn.classList.remove('loading');
-                
-                // Verify code (in real app, check with backend)
-                if (code === '123456') {
-                    showAlert('Code verified successfully!', 'success');
-                    verifyCodeForm.style.display = 'none';
-                    resetPasswordForm.style.display = 'block';
-                } else {
-                    showAlert('Invalid verification code. Please try again.');
-                }
-            }, 1500);
+            // Form will submit normally to the controller
         });
     }
 
@@ -111,34 +78,27 @@ document.addEventListener('DOMContentLoaded', function() {
     // Step 3: Reset Password
     if (resetPasswordForm) {
         resetPasswordForm.addEventListener('submit', function(e) {
-            e.preventDefault();
-            
             const newPassword = document.getElementById('newPassword').value;
             const confirmNewPassword = document.getElementById('confirmNewPassword').value;
             
             if (!newPassword || !confirmNewPassword) {
+                e.preventDefault();
                 showAlert('Please fill in all fields');
                 return;
             }
 
             if (newPassword.length < 8) {
+                e.preventDefault();
                 showAlert('Password must be at least 8 characters long');
                 return;
             }
 
             if (newPassword !== confirmNewPassword) {
+                e.preventDefault();
                 showAlert('Passwords do not match');
                 return;
             }
-
-            const btn = this.querySelector('button[type="submit"]');
-            btn.classList.add('loading');
-            
-            setTimeout(() => {
-                btn.classList.remove('loading');
-                resetPasswordForm.style.display = 'none';
-                successMessage.style.display = 'block';
-            }, 1500);
+            // Form will submit normally to the controller
         });
     }
 
