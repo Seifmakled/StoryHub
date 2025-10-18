@@ -29,5 +29,10 @@ if (!class_exists('Database')) {
     <?php if (isset($pageCSS)): ?>
         <link rel="stylesheet" href="/StoryHub/public/css/<?php echo $pageCSS; ?>">
     <?php endif; ?>
+
+    <!-- Page-specific JavaScript -->
+<?php if (isset($pageJS)): ?>
+    <script src="/StoryHub/public/js/<?php echo $pageJS; ?>"></script>
+<?php endif; ?>
 </head>
 <body>
