@@ -2,6 +2,7 @@
 document.addEventListener('DOMContentLoaded', function() {
     const loginForm = document.getElementById('loginForm');
     const alertMessage = document.getElementById('alertMessage');
+    const credentialsInput = document.getElementById('email_or_username');
 
     // Toggle Password Visibility
     window.togglePassword = function() {
@@ -37,44 +38,21 @@ document.addEventListener('DOMContentLoaded', function() {
     // Form Submission
     if (loginForm) {
         loginForm.addEventListener('submit', function(e) {
-            e.preventDefault();
-            
-            const email = document.getElementById('email').value.trim();
+            const emailOrUsername = credentialsInput ? credentialsInput.value.trim() : '';
             const password = document.getElementById('password').value;
-            const remember = document.getElementById('remember').checked;
-            
+
             // Basic validation
-            if (!email || !password) {
+            if (!emailOrUsername || !password) {
+                e.preventDefault();
                 showAlert('Please fill in all fields');
                 return;
             }
 
-            if (!isValidEmail(email)) {
+            if (emailOrUsername.includes('@') && !isValidEmail(emailOrUsername)) {
+                e.preventDefault();
                 showAlert('Please enter a valid email address');
                 return;
             }
-
-            // Show loading state
-            const btn = loginForm.querySelector('button[type="submit"]');
-            btn.classList.add('loading');
-            
-            // Simulate API call
-            setTimeout(() => {
-                // Here you would make an actual API call
-                // For now, we'll simulate a response
-                
-                // Example: Successful login
-                // window.location.href = 'index.php?page=home';
-                
-                // Example: Failed login
-                btn.classList.remove('loading');
-                showAlert('Invalid email or password');
-                
-                // For demo purposes, let's redirect after 2 seconds
-                // setTimeout(() => {
-                //     window.location.href = 'index.php?page=home';
-                // }, 2000);
-            }, 1500);
         });
     }
 

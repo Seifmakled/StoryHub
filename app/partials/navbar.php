@@ -1,7 +1,7 @@
 <nav class="navbar">
     <div class="nav-container">
         <div class="nav-logo">
-            <a href="index.php?page=home">
+            <a href="index.php?url=landing">
                 <i class="fas fa-feather-alt"></i>
                 <span>StoryHub</span>
             </a>

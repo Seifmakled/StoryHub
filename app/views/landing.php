@@ -4,8 +4,8 @@ $pageDescription = 'Join thousands of writers sharing their stories. Discover, c
 $pageCSS = 'landing.css';
 $pageJS = 'landing.js';
 
-include '../partials/header.php';
-include '../partials/navbar.php';
+include __DIR__ . '/../partials/header.php';
+include __DIR__ . '/../partials/navbar.php';
 ?>
 
 <!-- Hero Section -->
@@ -15,14 +15,12 @@ include '../partials/navbar.php';
             <h1 class="hero-title">Where Stories Come to Life</h1>
             <p class="hero-subtitle">Share your thoughts, express your creativity, and connect with a community of passionate readers and writers.</p>
             <div class="hero-buttons">
-                <a href="index.php?page=register" class="btn btn-primary">Start Writing</a>
-                <a href="index.php?page=explore" class="btn btn-secondary">Explore Stories</a>
+                <a href="/StoryHub/index.php?url=register" class="btn btn-primary">Start Writing</a>
+                <a href="/StoryHub/index.php?url=explore" class="btn btn-secondary">Explore Stories</a>
             </div>
         </div>
         <div class="hero-image">
-            <!-- <img src="public/images/hero-illustration.svg" alt="Writing illustration" onerror="this.src='public/images/placeholder-hero.jpg'"> -->
-    hi seif   
-        
+            <!-- <img src="public/images/hero-illustration.svg" alt="Writing illustration" onerror="this.src='public/images/placeholder-hero.jpg'"> -->        
         </div>
     </div>
 </section>
@@ -32,7 +30,7 @@ include '../partials/navbar.php';
     <div class="container">
         <div class="section-header">
             <h2>Featured Stories</h2>
-            <a href="index.php?page=explore&filter=featured" class="view-all">View All <i class="fas fa-arrow-right"></i></a>
+            <a href="/StoryHub/index.php?url=explore&filter=featured" class="view-all">View All <i class="fas fa-arrow-right"></i></a>
         </div>
         
         <div class="featured-grid">
@@ -98,7 +96,7 @@ include '../partials/navbar.php';
     <div class="container">
         <div class="section-header">
             <h2><i class="fas fa-fire"></i> Trending Now</h2>
-            <a href="index.php?page=explore&filter=trending" class="view-all">View All <i class="fas fa-arrow-right"></i></a>
+            <a href="/StoryHub/index.php?url=explore&filter=trending" class="view-all">View All <i class="fas fa-arrow-right"></i></a>
         </div>
         
         <div class="trending-grid">
@@ -147,7 +145,7 @@ include '../partials/navbar.php';
             
             foreach ($categories as $category):
             ?>
-            <a href="index.php?page=explore&category=<?php echo strtolower($category['name']); ?>" class="category-card" style="--category-color: <?php echo $category['color']; ?>">
+            <a href="/StoryHub/index.php?url=explore&category=<?php echo strtolower($category['name']); ?>" class="category-card" style="--category-color: <?php echo $category['color']; ?>">
                 <i class="fas <?php echo $category['icon']; ?> category-icon"></i>
                 <h4><?php echo $category['name']; ?></h4>
                 <span class="article-count">125+ articles</span>
@@ -163,9 +161,9 @@ include '../partials/navbar.php';
         <div class="cta-content">
             <h2>Ready to Share Your Story?</h2>
             <p>Join our community of writers and readers. Start your journey today.</p>
-            <a href="index.php?page=register" class="btn btn-primary btn-lg">Get Started for Free</a>
+            <a href="/StoryHub/index.php?url=register" class="btn btn-primary btn-lg">Get Started for Free</a>
         </div>
     </div>
 </section>
 
-<?php include '../partials/footer.php'; ?>
+<?php include __DIR__ . '/../partials/footer.php'; ?>
