@@ -79,6 +79,9 @@ document.addEventListener('DOMContentLoaded', function() {
             // Update charts based on selected period
         });
     });
+
+    // Users: load list and wire form/actions
+    initUsersModule();
 });
 
 // Initialize Charts using Chart.js
@@ -184,4 +187,105 @@ function animateStats() {
             }, duration / steps);
         }
     });
+}
+
+// Users management
+function initUsersModule() {
+    const usersTable = document.getElementById('usersTable');
+    const addForm = document.getElementById('addUserForm');
+    if (!usersTable || !addForm) return;
+
+    async function loadUsers() {
+        try {
+            const base = (window.APP_BASE || './');
+            const res = await fetch(base + 'index.php?url=api-users');
+            const json = await res.json();
+            const rows = (json.data || []).map(u => {
+                // Handle different field names that might exist
+                const username = u.username || u.user_name || u.name || 'N/A';
+                const email = u.email || 'N/A';
+                const joined = u.created_at ? new Date(u.created_at).toLocaleDateString() : (u.date_created || 'N/A');
+                const isAdmin = (u.is_admin == 1 || u.is_admin === '1' || u.is_admin === true) ? 'Yes' : 'No';
+                return `
+                <tr data-user-id="${u.id}">
+                    <td>${u.id}</td>
+                    <td>${escapeHtml(username)}</td>
+                    <td>${escapeHtml(email)}</td>
+                    <td>${joined}</td>
+                    <td>${isAdmin}</td>
+                    <td>
+                        <div class="action-buttons">
+                            <button class="btn-icon btn-delete" title="Delete"><i class="fas fa-trash"></i></button>
+                        </div>
+                    </td>
+                </tr>`;
+            }).join('');
+            usersTable.querySelector('tbody').innerHTML = rows;
+        } catch (e) {
+            console.error('Failed to load users', e);
+        }
+    }
+
+    addForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const username = document.getElementById('newUsername').value.trim();
+        const email = document.getElementById('newEmail').value.trim();
+        const password = document.getElementById('newPassword').value;
+        if (!username || !email || !password) return;
+        try {
+            const base = (window.APP_BASE || './');
+            const res = await fetch(base + 'index.php?url=api-users', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username, email, password })
+            });
+            if (!res.ok) {
+                let msg = 'Failed to add user';
+                try {
+                    const err = await res.json();
+                    if (err && err.error) msg = err.error;
+                } catch(_) {}
+                alert(msg);
+                return;
+            }
+            addForm.reset();
+            await loadUsers();
+        } catch (e) {
+            console.error('Failed to add user', e);
+            alert('Network or server error while adding user');
+        }
+    });
+
+    usersTable.addEventListener('click', async (e) => {
+        const btn = e.target.closest('.btn-delete');
+        if (!btn) return;
+        const tr = e.target.closest('tr');
+        const id = tr && tr.getAttribute('data-user-id');
+        if (!id) return;
+        if (!confirm('Delete this user?')) return;
+        try {
+            const base = (window.APP_BASE || './');
+            const res = await fetch(base + `index.php?url=api-users&id=${encodeURIComponent(id)}`, { method: 'DELETE' });
+            if (!res.ok) {
+                const err = await res.json().catch(() => ({}));
+                alert(err.error || 'Failed to delete user');
+                return;
+            }
+            await loadUsers();
+        } catch (e) {
+            console.error('Failed to delete user', e);
+        }
+    });
+
+    // Simple HTML escape to avoid XSS when rendering strings
+    function escapeHtml(str) {
+        return String(str)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;');
+    }
+
+    loadUsers();
 }
