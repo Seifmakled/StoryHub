@@ -16,6 +16,16 @@ include '../partials/header.php';
 
 <!-- Chart.js for Admin Dashboard -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+    // Compute app base URL that points to project root (where index.php lives),
+    // even if this page is opened directly at /StoryHub/app/views/admin-dashboard.php
+    (function() {
+        var scriptName = <?php echo json_encode($_SERVER['SCRIPT_NAME']); ?>; // e.g. /StoryHub/app/views/admin-dashboard.php
+        var base = scriptName.replace(/\/app\/.+$/, '/'); // -> /StoryHub/
+        if (!/\/$/.test(base)) base += '/';
+        window.APP_BASE = base; // Used by admin-dashboard.js to call index.php at the root
+    })();
+</script>
 
 <div class="admin-wrapper">
     <!-- Admin Sidebar -->
@@ -191,7 +201,7 @@ include '../partials/header.php';
         </div>
 
         <!-- Tables Section -->
-        <div class="tables-grid">
+        <div class="tables-grid" id="dashboard">
             <!-- Recent Articles -->
             <div class="table-card">
                 <div class="card-header">
@@ -237,46 +247,30 @@ include '../partials/header.php';
                 </div>
             </div>
 
-            <!-- Recent Users -->
-            <div class="table-card">
+            <!-- Users Management -->
+            <div class="table-card" id="users">
                 <div class="card-header">
-                    <h3><i class="fas fa-users"></i> Recent Users</h3>
-                    <a href="#users" class="btn btn-sm">View All</a>
+                    <h3><i class="fas fa-users"></i> Users</h3>
                 </div>
                 <div class="table-wrapper">
-                    <table class="data-table">
+                    <form id="addUserForm" style="margin-bottom: 16px; display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px;">
+                        <input type="text" id="newUsername" placeholder="Username" required>
+                        <input type="email" id="newEmail" placeholder="Email" required>
+                        <input type="password" id="newPassword" placeholder="Password" required>
+                        <button type="submit" class="btn btn-sm">Add User</button>
+                    </form>
+                    <table class="data-table" id="usersTable">
                         <thead>
                             <tr>
-                                <th>User</th>
+                                <th>ID</th>
+                                <th>Username</th>
                                 <th>Email</th>
                                 <th>Joined</th>
-                                <th>Articles</th>
-                                <th>Status</th>
+                                <th>Admin</th>
                                 <th>Actions</th>
                             </tr>
                         </thead>
                         <tbody>
-                            <?php for ($i = 1; $i <= 5; $i++): ?>
-                            <tr>
-                                <td>
-                                    <div class="table-user">
-                                        <img src="public/images/default-avatar.jpg" alt="">
-                                        <span>User Name</span>
-                                    </div>
-                                </td>
-                                <td>user@example.com</td>
-                                <td>May 15, 2024</td>
-                                <td>12</td>
-                                <td><span class="badge-status active">Active</span></td>
-                                <td>
-                                    <div class="action-buttons">
-                                        <button class="btn-icon" title="View"><i class="fas fa-eye"></i></button>
-                                        <button class="btn-icon" title="Edit"><i class="fas fa-edit"></i></button>
-                                        <button class="btn-icon" title="Ban"><i class="fas fa-ban"></i></button>
-                                    </div>
-                                </td>
-                            </tr>
-                            <?php endfor; ?>
                         </tbody>
                     </table>
                 </div>
