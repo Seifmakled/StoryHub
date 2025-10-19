@@ -17,6 +17,7 @@ $routes = [
     'register' => __DIR__ . '/app/views/register.php',
     'forgot-password' => __DIR__ . '/app/views/forgot-password.php',
     'verify' => __DIR__ . '/app/views/verify.php',
+    'complete-profile' => __DIR__ . '/app/views/complete-profile.php',
     'profile' => __DIR__ . '/app/views/profile.php',
     'admin' => __DIR__ . '/app/views/admin-dashboard.php',
     'explore' => __DIR__ . '/app/views/explore.php',

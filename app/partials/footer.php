@@ -59,10 +59,5 @@
     </div>
 </footer>
 
-<!-- Page-specific JavaScript -->
-<?php if (isset($pageJS)): ?>
-    <script src="/StoryHub/public/js/<?php echo $pageJS; ?>"></script>
-<?php endif; ?>
-
 </body>
 </html>

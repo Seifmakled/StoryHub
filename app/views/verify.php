@@ -4,7 +4,7 @@ $pageDescription = 'Verify your email address';
 $pageCSS = 'login.css';
 $pageJS = 'verify.js';
 
-include '../partials/header.php';
+include __DIR__ . '/../partials/header.php';
 ?>
 
 <div class="auth-container">
@@ -23,6 +23,17 @@ include '../partials/header.php';
                 <div id="alertMessage" class="alert" style="display: none;"></div>
 
                 <form id="verifyForm" class="auth-form">
+                    <!-- Hidden input to capture continuous typing / mobile OTP autofill -->
+                    <input
+                        type="text"
+                        id="codeHidden"
+                        inputmode="numeric"
+                        autocomplete="one-time-code"
+                        pattern="\d*"
+                        maxlength="6"
+                        aria-hidden="true"
+                        style="position:absolute;opacity:0;pointer-events:none;width:0;height:0;left:-9999px;"
+                    />
                     <div class="form-group">
                         <label>Verification Code</label>
                         <div class="verification-inputs">
