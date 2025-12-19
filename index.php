@@ -19,16 +19,24 @@ $routes = [
     'verify' => __DIR__ . '/app/views/verify.php',
     'complete-profile' => __DIR__ . '/app/views/complete-profile.php',
     'profile' => __DIR__ . '/app/views/profile.php',
+    'my-profile' => __DIR__ . '/app/views/my-profile.php',
     'admin' => __DIR__ . '/app/views/admin-dashboard.php',
     'explore' => __DIR__ . '/app/views/explore.php',
     'article' => __DIR__ . '/app/views/article.php',
     'logout' => __DIR__ . '/app/views/logout.php',
-    'api-users' => __DIR__ . '/app/controllers/api-users.php'
+    'api-users' => __DIR__ . '/app/controllers/api-users.php',
+    'api-me' => __DIR__ . '/app/controllers/api-me.php',
+    'api-articles' => __DIR__ . '/app/controllers/api-articles.php',
+    'diag' => __DIR__ . '/app/views/diagnostics.php'
 ];
 
 // Check if route exists
 if (array_key_exists($page, $routes)) {
     $file = $routes[$page];
+    // Auth guard: my-profile requires login; include login view instead of redirect to avoid loops
+   /* if ($page === 'my-profile' && !isset($_SESSION['user_id'])) {
+        $file = __DIR__ . '/app/views/login.php';
+    } */
     if (file_exists($file)) {
         include $file;
     } else {

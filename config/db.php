@@ -78,6 +78,73 @@ class Database {
                     INDEX (`username`)
                 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;"
             );
+
+            // Articles table
+            self::$conn->exec(
+                "CREATE TABLE IF NOT EXISTS `articles` (
+                    `id` INT AUTO_INCREMENT PRIMARY KEY,
+                    `user_id` INT NOT NULL,
+                    `title` VARCHAR(255) NOT NULL,
+                    `slug` VARCHAR(255) NOT NULL UNIQUE,
+                    `content` LONGTEXT NULL,
+                    `excerpt` TEXT NULL,
+                    `featured_image` VARCHAR(255) NULL,
+                    `category` VARCHAR(50) NULL,
+                    `tags` VARCHAR(255) NULL,
+                    `is_published` TINYINT(1) NOT NULL DEFAULT 0,
+                    `is_featured` TINYINT(1) NOT NULL DEFAULT 0,
+                    `views` INT NOT NULL DEFAULT 0,
+                    `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                    `updated_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                    INDEX (`user_id`),
+                    INDEX (`slug`),
+                    CONSTRAINT `fk_articles_user` FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON DELETE CASCADE
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;"
+            );
+
+            // Likes table
+            self::$conn->exec(
+                "CREATE TABLE IF NOT EXISTS `likes` (
+                    `id` INT AUTO_INCREMENT PRIMARY KEY,
+                    `user_id` INT NOT NULL,
+                    `article_id` INT NOT NULL,
+                    `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                    UNIQUE KEY `uniq_user_article_like` (`user_id`, `article_id`),
+                    INDEX (`article_id`),
+                    CONSTRAINT `fk_likes_user` FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON DELETE CASCADE,
+                    CONSTRAINT `fk_likes_article` FOREIGN KEY (`article_id`) REFERENCES `articles`(`id`) ON DELETE CASCADE
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;"
+            );
+
+            // Bookmarks (saved articles) table
+            self::$conn->exec(
+                "CREATE TABLE IF NOT EXISTS `bookmarks` (
+                    `id` INT AUTO_INCREMENT PRIMARY KEY,
+                    `user_id` INT NOT NULL,
+                    `article_id` INT NOT NULL,
+                    `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                    UNIQUE KEY `uniq_user_article_bookmark` (`user_id`, `article_id`),
+                    INDEX (`article_id`),
+                    CONSTRAINT `fk_bookmarks_user` FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON DELETE CASCADE,
+                    CONSTRAINT `fk_bookmarks_article` FOREIGN KEY (`article_id`) REFERENCES `articles`(`id`) ON DELETE CASCADE
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;"
+            );
+
+            // Comments table
+            self::$conn->exec(
+                "CREATE TABLE IF NOT EXISTS `comments` (
+                    `id` INT AUTO_INCREMENT PRIMARY KEY,
+                    `user_id` INT NOT NULL,
+                    `article_id` INT NOT NULL,
+                    `content` TEXT NOT NULL,
+                    `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                    `updated_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                    INDEX (`user_id`),
+                    INDEX (`article_id`),
+                    CONSTRAINT `fk_comments_user` FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON DELETE CASCADE,
+                    CONSTRAINT `fk_comments_article` FOREIGN KEY (`article_id`) REFERENCES `articles`(`id`) ON DELETE CASCADE
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;"
+            );
         } catch (PDOException $e) {
             die('Table creation failed: ' . $e->getMessage());
         }
