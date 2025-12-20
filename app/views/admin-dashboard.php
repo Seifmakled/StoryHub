@@ -11,24 +11,17 @@ $pageDescription = 'Admin dashboard';
 $pageCSS = 'admin-dashboard.css';
 $pageJS = 'admin-dashboard.js';
 
-include '../partials/header.php';
+include __DIR__ . '/../partials/header.php';
 ?>
 
 <!-- Chart.js for Admin Dashboard -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <script>
     // Compute app base URL that points to project root (where index.php lives),
-    // works whether routed through /StoryHub/index.php or opened directly under /StoryHub/app/views/...
+    // even if this page is opened directly at /StoryHub/app/views/admin-dashboard.php
     (function() {
-        var scriptName = <?php echo json_encode($_SERVER['SCRIPT_NAME']); ?>; // e.g. /StoryHub/index.php or /StoryHub/app/views/admin-dashboard.php
-        var base;
-        if (/\/index\.php$/.test(scriptName)) {
-            // Already at project root
-            base = scriptName.replace(/index\.php$/, ''); // -> /StoryHub/
-        } else {
-            // In a nested path under /app/... -> back to project root
-            base = scriptName.replace(/\/app\/.+$/, '/'); // -> /StoryHub/
-        }
+        var scriptName = <?php echo json_encode($_SERVER['SCRIPT_NAME']); ?>; // e.g. /StoryHub/app/views/admin-dashboard.php
+        var base = scriptName.replace(/\/app\/.+$/, '/'); // -> /StoryHub/
         if (!/\/$/.test(base)) base += '/';
         window.APP_BASE = base; // Used by admin-dashboard.js to call index.php at the root
     })();
@@ -286,4 +279,4 @@ include '../partials/header.php';
     </main>
 </div>
 
-<?php include '../partials/footer.php'; ?>
+<?php include __DIR__ . '/../partials/footer.php'; ?>

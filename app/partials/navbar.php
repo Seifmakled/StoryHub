@@ -18,7 +18,7 @@
                 <li><a href="/StoryHub/index.php?url=landing">Home</a></li>
                 <li><a href="/StoryHub/index.php?url=explore">Explore</a></li>
                 <?php if (isset($_SESSION['user_id'])): ?>
-                    <li><a href="/StoryHub/index.php?url=profile&id=<?php echo $_SESSION['user_id']; ?>">My Profile</a></li>
+                    <li><a href="/StoryHub/index.php?url=my-profile">My Profile</a></li>
                     <?php if (isset($_SESSION['is_admin']) && $_SESSION['is_admin']): ?>
                         <li><a href="/StoryHub/index.php?url=admin">Dashboard</a></li>
                     <?php endif; ?>
@@ -31,7 +31,7 @@
                         <div class="user-dropdown">
                             <img src="public/images/<?php echo $_SESSION['profile_image'] ?? 'default-avatar.jpg'; ?>" alt="Profile" class="nav-avatar">
                             <div class="dropdown-content">
-                                <a href="/StoryHub/index.php?url=profile&id=<?php echo $_SESSION['user_id']; ?>">
+                                <a href="/StoryHub/index.php?url=my-profile">
                                     <i class="fas fa-user"></i> Profile
                                 </a>
                                 <a href="/StoryHub/index.php?url=settings">

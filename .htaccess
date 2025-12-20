@@ -1,13 +1,14 @@
-# Enable Rewrite Engine (optional - for cleaner URLs)
-# Uncomment to enable clean URLs without ?page= parameter
+# Enable Rewrite Engine for clean URLs using ?url= routing
+RewriteEngine On
+RewriteBase /StoryHub/
 
-# RewriteEngine On
-# RewriteBase /Blog-Project/
+# Redirect all non-file, non-directory requests to index.php with url param
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^(.+)$ index.php?url=$1 [L,QSA]
 
-# Redirect to index.php if file doesn't exist
-# RewriteCond %{REQUEST_FILENAME} !-f
-# RewriteCond %{REQUEST_FILENAME} !-d
-# RewriteRule ^(.*)$ index.php?page=$1 [L,QSA]
+# Optional: make root path load index.php (landing by default)
+DirectoryIndex index.php
 
 # Security: Prevent directory listing
 Options -Indexes

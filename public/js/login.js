@@ -56,6 +56,20 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
+    // Surface server-side login errors as toasts
+    const params = new URLSearchParams(window.location.search);
+    const error = params.get('error');
+    if (error) {
+        const messages = {
+            empty_fields: 'Please fill in all fields',
+            user_not_found: 'Email or username not found',
+            invalid_credentials: 'Incorrect password',
+            invalid_request: 'Please submit the login form to sign in',
+            db_error: 'Something went wrong. Please try again'
+        };
+        showAlert(messages[error] || 'Unable to sign in', 'error');
+    }
+
     // Email validation
     function isValidEmail(email) {
         const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;

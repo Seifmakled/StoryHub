@@ -3,8 +3,8 @@ $pageTitle = '404 - Page Not Found';
 $pageDescription = 'Page not found';
 $pageCSS = 'landing.css';
 
-include '../partials/header.php';
-include '../partials/navbar.php';
+include __DIR__ . '/../partials/header.php';
+include __DIR__ . '/../partials/navbar.php';
 ?>
 
 <div style="text-align: center; padding: 5rem 2rem; min-height: 60vh; display: flex; flex-direction: column; align-items: center; justify-content: center;">
@@ -16,4 +16,4 @@ include '../partials/navbar.php';
     </a>
 </div>
 
-<?php include '../partials/footer.php'; ?>
+<?php include __DIR__ . '/../partials/footer.php'; ?>

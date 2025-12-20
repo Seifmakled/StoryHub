@@ -1,149 +1,221 @@
-// Explore Page JavaScript
+// Explore Page JavaScript (fetch real articles)
 document.addEventListener('DOMContentLoaded', function() {
-    // Search Functionality
     const exploreSearch = document.getElementById('exploreSearch');
+    const filterBtns = document.querySelectorAll('.filter-btn');
+    const viewBtns = document.querySelectorAll('.view-btn');
+    const articlesContainer = document.getElementById('articlesContainer');
+    const resultsCount = document.getElementById('resultsCount');
+
+    let articles = [];
+    let total = 0;
+    let activeFilter = 'all';
+    let activeCategory = 'all';
+    let activeSort = 'latest';
+
+    const base = (typeof window.APP_BASE === 'string') ? window.APP_BASE : '';
+
+    const readingTime = (text) => {
+        const words = (text || '').split(/\s+/).filter(Boolean).length;
+        return Math.max(1, Math.ceil(words / 200)) + ' min';
+    };
+
+    const renderCards = (list) => {
+        if (!articlesContainer) return;
+        if (!list || list.length === 0) {
+            articlesContainer.innerHTML = '<div class="empty-state">No articles yet.</div>';
+            if (resultsCount) resultsCount.textContent = 'No articles found';
+            return;
+        }
+
+        const html = list.map((a) => {
+            const cover = a.featured_image ? `${base}public/images/${a.featured_image}` : `${base}public/images/article-placeholder.jpg`;
+            const authorImg = a.profile_image ? `${base}public/images/${a.profile_image}` : `${base}public/images/default-avatar.jpg`;
+            const authorName = a.full_name || a.username || 'Author';
+            const cat = a.category || 'General';
+            const mins = readingTime(a.excerpt);
+            const date = a.created_at ? new Date(a.created_at).toLocaleDateString() : '';
+            return `
+            <article class="explore-card" data-slug="${a.slug}">
+                <div class="card-image">
+                    <img src="${cover}" alt="Article">
+                    <div class="card-overlay">
+                        <button class="btn-save" title="Save article">
+                            <i class="far fa-bookmark"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="card-content">
+                    <div class="card-meta">
+                        <span class="category">${cat}</span>
+                        <span class="reading-time"><i class="far fa-clock"></i> ${mins}</span>
+                    </div>
+                    <h3>${a.title || ''}</h3>
+                    <p>${a.excerpt || ''}</p>
+                    <div class="card-footer">
+                        <div class="author-info">
+                            <img src="${authorImg}" alt="Author">
+                            <div class="author-details">
+                                <span class="author-name">${authorName}</span>
+                                <span class="publish-date">${date}</span>
+                            </div>
+                        </div>
+                        <div class="card-stats">
+                            <span title="Views"><i class="fas fa-eye"></i> ${a.views || 0}</span>
+                            <span title="Likes"><i class="fas fa-heart"></i> ${a.likes_count || 0}</span>
+                            <span title="Comments"><i class="fas fa-comment"></i> ${a.comments_count || 0}</span>
+                        </div>
+                    </div>
+                </div>
+            </article>`;
+        }).join('');
+
+        articlesContainer.innerHTML = html;
+        if (resultsCount) {
+            const showing = list.length;
+            resultsCount.textContent = `Showing ${showing} of ${total || showing} articles`;
+        }
+
+        articlesContainer.querySelectorAll('.explore-card').forEach(card => {
+            card.addEventListener('click', (e) => {
+                if (e.target.closest('.btn-save')) return;
+                const slug = card.getAttribute('data-slug');
+                if (slug) {
+                    window.location.href = `${base}index.php?url=article&slug=${encodeURIComponent(slug)}`;
+                }
+            });
+        });
+
+        articlesContainer.querySelectorAll('.btn-save').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                btn.classList.toggle('saved');
+                const icon = btn.querySelector('i');
+                icon.classList.toggle('far', !btn.classList.contains('saved'));
+                icon.classList.toggle('fas', btn.classList.contains('saved'));
+            });
+        });
+    };
+
+    const applyFilters = () => {
+        let list = [...articles];
+        const q = (exploreSearch?.value || '').trim().toLowerCase();
+        if (q) {
+            list = list.filter(a =>
+                (a.title && a.title.toLowerCase().includes(q)) ||
+                (a.excerpt && a.excerpt.toLowerCase().includes(q)) ||
+                (a.tags && a.tags.toLowerCase().includes(q)) ||
+                (a.username && a.username.toLowerCase().includes(q))
+            );
+        }
+
+        if (activeCategory !== 'all') {
+            list = list.filter(a => (a.category || 'general').toLowerCase() === activeCategory);
+        }
+
+        if (activeFilter === 'featured') {
+            list = list.filter(a => a.is_featured === 1 || (a.tags && a.tags.toLowerCase().includes('featured')));
+        }
+        if (activeFilter === 'trending' || activeFilter === 'popular') {
+            list = list.sort((a, b) => (b.likes_count || 0) - (a.likes_count || 0));
+        }
+        if (activeFilter === 'recent') {
+            activeSort = 'latest';
+        }
+
+        if (activeSort === 'latest') {
+            list = list.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+        } else if (activeSort === 'oldest') {
+            list = list.sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
+        } else if (activeSort === 'views') {
+            list = list.sort((a, b) => (b.views || 0) - (a.views || 0));
+        } else if (activeSort === 'likes') {
+            list = list.sort((a, b) => (b.likes_count || 0) - (a.likes_count || 0));
+        }
+
+        renderCards(list);
+    };
+
+    const fetchArticles = async () => {
+        if (!articlesContainer) return;
+        articlesContainer.innerHTML = '<div class="empty-state loading">Loading articles...</div>';
+        try {
+            const res = await fetch(`${base}index.php?url=api-articles&limit=30`);
+            const data = await res.json();
+            articles = data.data || [];
+            total = data.meta?.total || articles.length;
+            applyFilters();
+        } catch (err) {
+            articlesContainer.innerHTML = '<div class="empty-state">Could not load articles.</div>';
+            console.error(err);
+        }
+    };
+
+    // Search
     if (exploreSearch) {
         exploreSearch.addEventListener('keypress', function(e) {
             if (e.key === 'Enter') {
-                performSearch();
+                e.preventDefault();
+                applyFilters();
             }
+        });
+        exploreSearch.addEventListener('input', () => {
+            applyFilters();
         });
     }
 
-    function performSearch() {
-        const query = exploreSearch.value.trim();
-        if (query) {
-            // In real app, filter articles or make API call
-            console.log('Searching for:', query);
-        }
-    }
-
-    // Filter Buttons
-    const filterBtns = document.querySelectorAll('.filter-btn');
+    // Filters
     filterBtns.forEach(btn => {
         btn.addEventListener('click', function() {
             filterBtns.forEach(b => b.classList.remove('active'));
             this.classList.add('active');
-            
-            const filter = this.dataset.filter;
-            // In real app, filter articles based on selection
-            console.log('Filter selected:', filter);
+            activeFilter = this.dataset.filter || 'all';
+            applyFilters();
         });
     });
 
     // View Toggle
-    const viewBtns = document.querySelectorAll('.view-btn');
-    const articlesContainer = document.getElementById('articlesContainer');
-    
     viewBtns.forEach(btn => {
         btn.addEventListener('click', function() {
             viewBtns.forEach(b => b.classList.remove('active'));
             this.classList.add('active');
-            
             const view = this.dataset.view;
-            articlesContainer.className = `articles-container ${view}-view`;
-        });
-    });
-
-    // Save Article Button
-    document.querySelectorAll('.btn-save').forEach(btn => {
-        btn.addEventListener('click', function(e) {
-            e.stopPropagation();
-            e.preventDefault();
-            
-            this.classList.toggle('saved');
-            const icon = this.querySelector('i');
-            
-            if (this.classList.contains('saved')) {
-                icon.classList.remove('far');
-                icon.classList.add('fas');
-            } else {
-                icon.classList.remove('fas');
-                icon.classList.add('far');
+            if (articlesContainer) {
+                articlesContainer.className = `articles-container ${view}-view`;
             }
         });
     });
 
-    // Article Card Click
-    document.querySelectorAll('.explore-card').forEach(card => {
-        card.addEventListener('click', function(e) {
-            if (!e.target.closest('.btn-save')) {
-                window.location.href = 'index.php?page=article&id=1';
-            }
-        });
-    });
-
-    // Follow Author Button
-    document.querySelectorAll('.btn-follow-sm').forEach(btn => {
-        btn.addEventListener('click', function() {
-            if (this.textContent === 'Follow') {
-                this.textContent = 'Following';
-                this.style.background = '#e2e8f0';
-                this.style.color = '#334155';
-            } else {
-                this.textContent = 'Follow';
-                this.style.background = '';
-                this.style.color = '';
-            }
-        });
-    });
-
-    // Pagination
-    document.querySelectorAll('.page-btn').forEach(btn => {
-        btn.addEventListener('click', function() {
-            if (!this.disabled && !this.classList.contains('active')) {
-                document.querySelectorAll('.page-btn').forEach(b => {
-                    if (!isNaN(b.textContent)) {
-                        b.classList.remove('active');
-                    }
-                });
-                
-                if (!isNaN(this.textContent)) {
-                    this.classList.add('active');
-                }
-                
-                // Scroll to top
-                window.scrollTo({ top: 0, behavior: 'smooth' });
-                
-                // In real app, load new page of articles
-                console.log('Loading page:', this.textContent);
-            }
-        });
-    });
-
-    // Category Dropdown
+    // Dropdowns
     document.querySelectorAll('.dropdown-menu a').forEach(link => {
         link.addEventListener('click', function(e) {
             e.preventDefault();
-            const category = this.dataset.category || this.dataset.sort;
-            console.log('Selected:', category);
-            
-            // Update button text
+            const category = this.dataset.category;
+            const sort = this.dataset.sort;
             const toggle = this.closest('.filter-dropdown').querySelector('.dropdown-toggle');
             const text = this.textContent;
             const icon = toggle.querySelector('i').outerHTML;
             const chevron = '<i class="fas fa-chevron-down"></i>';
             toggle.innerHTML = icon + ' ' + text + ' ' + chevron;
+
+            if (category) {
+                activeCategory = category.toLowerCase();
+            }
+            if (sort) {
+                activeSort = sort;
+            }
+            applyFilters();
         });
     });
 
-    // Tags Click
+    // Tags click
     document.querySelectorAll('.tag').forEach(tag => {
         tag.addEventListener('click', function(e) {
             e.preventDefault();
-            const tagName = this.textContent;
-            console.log('Tag selected:', tagName);
-            exploreSearch.value = tagName;
-            performSearch();
+            exploreSearch.value = this.textContent.trim();
+            applyFilters();
         });
     });
 
-    // Author Item Click
-    document.querySelectorAll('.author-item').forEach(item => {
-        item.addEventListener('click', function(e) {
-            if (!e.target.classList.contains('btn-follow-sm')) {
-                window.location.href = 'index.php?page=profile&id=1';
-            }
-        });
-    });
+    fetchArticles();
 });
