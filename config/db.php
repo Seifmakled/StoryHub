@@ -145,9 +145,50 @@ class Database {
                     CONSTRAINT `fk_comments_article` FOREIGN KEY (`article_id`) REFERENCES `articles`(`id`) ON DELETE CASCADE
                 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;"
             );
+
+            // Post-bootstrap schema hardening / new columns (idempotent)
+            self::ensureColumn('users', 'status', "ENUM('active','banned') NOT NULL DEFAULT 'active' AFTER `is_admin`");
+
+            self::ensureColumn('articles', 'status', "ENUM('pending','approved','rejected') NOT NULL DEFAULT 'pending' AFTER `is_published`");
+            self::ensureColumn('articles', 'reviewed_by', 'INT NULL AFTER `status`');
+            self::ensureColumn('articles', 'reviewed_at', 'DATETIME NULL AFTER `reviewed_by`');
+            self::ensureColumn('articles', 'rejection_reason', 'TEXT NULL AFTER `reviewed_at`');
+
+            // Optional foreign key for reviewer
+            if (!self::foreignKeyExists('articles', 'fk_articles_reviewed_by')) {
+                self::$conn->exec(
+                    'ALTER TABLE `articles`
+                        ADD CONSTRAINT `fk_articles_reviewed_by`
+                        FOREIGN KEY (`reviewed_by`) REFERENCES `users`(`id`)
+                        ON DELETE SET NULL'
+                );
+            }
         } catch (PDOException $e) {
             die('Table creation failed: ' . $e->getMessage());
         }
+    }
+
+    /**
+     * Add a column if it does not yet exist.
+     */
+    private static function ensureColumn(string $table, string $column, string $definition): void {
+        $stmt = self::$conn->prepare('SHOW COLUMNS FROM `' . $table . '` LIKE ?');
+        $stmt->execute([$column]);
+        if (!$stmt->fetch()) {
+            self::$conn->exec('ALTER TABLE `' . $table . '` ADD COLUMN `' . $column . '` ' . $definition);
+        }
+    }
+
+    /**
+     * Check if a foreign key already exists on a table.
+     */
+    private static function foreignKeyExists(string $table, string $constraint): bool {
+        $stmt = self::$conn->prepare(
+            'SELECT CONSTRAINT_NAME FROM information_schema.TABLE_CONSTRAINTS
+             WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ? AND CONSTRAINT_NAME = ? AND CONSTRAINT_TYPE = "FOREIGN KEY"'
+        );
+        $stmt->execute([$table, $constraint]);
+        return (bool)$stmt->fetch();
     }
 
     public static function closeConnection(): void {

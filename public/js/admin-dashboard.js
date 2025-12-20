@@ -1,5 +1,6 @@
 // Admin Dashboard JavaScript
 document.addEventListener('DOMContentLoaded', function() {
+    const base = (window.APP_BASE || './');
     // Sidebar Toggle for Mobile
     const toggleSidebar = document.getElementById('toggleSidebar');
     const sidebar = document.querySelector('.admin-sidebar');
@@ -42,33 +43,6 @@ document.addEventListener('DOMContentLoaded', function() {
     // Initialize Charts
     initializeCharts();
 
-    // Table Row Click
-    document.querySelectorAll('.data-table tbody tr').forEach(row => {
-        row.style.cursor = 'pointer';
-        row.addEventListener('click', function(e) {
-            if (!e.target.closest('.action-buttons')) {
-                console.log('Row clicked:', row);
-            }
-        });
-    });
-
-    // Action Buttons
-    document.querySelectorAll('.btn-icon').forEach(btn => {
-        btn.addEventListener('click', function(e) {
-            e.stopPropagation();
-            
-            const action = this.getAttribute('title').toLowerCase();
-            
-            if (action === 'delete' || action === 'ban') {
-                if (confirm(`Are you sure you want to ${action} this item?`)) {
-                    console.log(`${action} confirmed`);
-                }
-            } else {
-                console.log(`${action} action triggered`);
-            }
-        });
-    });
-
     // Stats Cards Animation
     animateStats();
 
@@ -80,8 +54,10 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
-    // Users: load list and wire form/actions
-    initUsersModule();
+    // Stats, articles, users modules
+    loadStats(base);
+    initArticlesModule(base);
+    initUsersModule(base);
 });
 
 // Initialize Charts using Chart.js
@@ -190,7 +166,132 @@ function animateStats() {
 }
 
 // Users management
-function initUsersModule() {
+async function loadStats(base) {
+    try {
+        const res = await fetch(base + 'index.php?url=api-stats');
+        const json = await res.json();
+        const data = json.data || {};
+        setStatText('statUsers', data.users_total);
+        setStatText('statArticles', data.articles_published ?? data.articles_total);
+        setStatText('statViews', data.views_total);
+        setStatText('statComments', data.comments_total);
+    } catch (e) {
+        console.error('Failed to load stats', e);
+    }
+}
+
+function setStatText(id, value) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    const v = (typeof value === 'number') ? value : 0;
+    el.textContent = v.toLocaleString();
+}
+
+function escapeHtml(str) {
+    return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+}
+
+function initArticlesModule(base) {
+    const tbody = document.getElementById('articlesTableBody');
+    if (!tbody) return;
+
+    async function loadArticles() {
+        tbody.innerHTML = '<tr><td colspan="6">Loading...</td></tr>';
+        try {
+            const res = await fetch(base + 'index.php?url=api-articles&status=pending&limit=50');
+            const json = await res.json();
+            const rows = (json.data || []).map(renderArticleRow).join('');
+            tbody.innerHTML = rows || '<tr><td colspan="6">No pending articles.</td></tr>';
+        } catch (e) {
+            console.error('Failed to load articles', e);
+            tbody.innerHTML = '<tr><td colspan="6">Could not load articles.</td></tr>';
+        }
+    }
+
+    function renderArticleRow(a) {
+        const author = a.full_name || a.username || 'Author';
+        const cat = a.category || 'General';
+        const status = a.status || 'pending';
+        const cover = a.featured_image ? `${base}public/images/${a.featured_image}` : `${base}public/images/article-placeholder.jpg`;
+        return `
+        <tr data-article-id="${a.id}" data-slug="${a.slug || ''}">
+            <td>
+                <div class="table-title">
+                    <img src="${cover}" alt="">
+                    <span>${escapeHtml(a.title || 'Untitled')}</span>
+                </div>
+            </td>
+            <td>${escapeHtml(author)}</td>
+            <td><span class="badge-cat">${escapeHtml(cat)}</span></td>
+            <td>${renderStatusBadge(status)}</td>
+            <td>${(a.views || 0).toLocaleString()}</td>
+            <td>
+                <div class="action-buttons">
+                    <button class="btn-icon btn-view" title="View"><i class="fas fa-eye"></i></button>
+                    <button class="btn-icon btn-approve" title="Approve"><i class="fas fa-check"></i></button>
+                    <button class="btn-icon btn-reject" title="Reject"><i class="fas fa-times"></i></button>
+                </div>
+            </td>
+        </tr>`;
+    }
+
+    function renderStatusBadge(status) {
+        const cls = status === 'approved' ? 'published' : (status === 'rejected' ? 'archived' : 'draft');
+        return `<span class="badge-status ${cls}">${status}</span>`;
+    }
+
+    tbody.addEventListener('click', async (e) => {
+        const tr = e.target.closest('tr');
+        if (!tr) return;
+        const id = tr.getAttribute('data-article-id');
+        const slug = tr.getAttribute('data-slug');
+
+        if (e.target.closest('.btn-view')) {
+            if (slug) window.open(`${base}index.php?url=article&slug=${encodeURIComponent(slug)}`, '_blank');
+            return;
+        }
+
+        if (e.target.closest('.btn-approve')) {
+            await reviewArticle(id, 'approved');
+            await loadArticles();
+            return;
+        }
+
+        if (e.target.closest('.btn-reject')) {
+            const reason = prompt('Optional rejection reason:');
+            await reviewArticle(id, 'rejected', reason);
+            await loadArticles();
+            return;
+        }
+    });
+
+    async function reviewArticle(id, status, reason) {
+        if (!id) return;
+        try {
+            const res = await fetch(base + 'index.php?url=api-articles', {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ id, status, reason })
+            });
+            if (!res.ok) {
+                const err = await res.json().catch(() => ({}));
+                alert(err.error || 'Failed to update article');
+            }
+        } catch (e) {
+            console.error('Review failed', e);
+            alert('Network error while updating article');
+        }
+    }
+
+    loadArticles();
+}
+
+function initUsersModule(base) {
     const usersTable = document.getElementById('usersTable');
     const addForm = document.getElementById('addUserForm');
     if (!usersTable || !addForm) return;
@@ -276,16 +377,6 @@ function initUsersModule() {
             console.error('Failed to delete user', e);
         }
     });
-
-    // Simple HTML escape to avoid XSS when rendering strings
-    function escapeHtml(str) {
-        return String(str)
-            .replace(/&/g, '&amp;')
-            .replace(/</g, '&lt;')
-            .replace(/>/g, '&gt;')
-            .replace(/"/g, '&quot;')
-            .replace(/'/g, '&#39;');
-    }
 
     loadUsers();
 }

@@ -28,6 +28,7 @@ $routes = [
     'api-users' => __DIR__ . '/app/controllers/api-users.php',
     'api-me' => __DIR__ . '/app/controllers/api-me.php',
     'api-articles' => __DIR__ . '/app/controllers/api-articles.php',
+    'api-stats' => __DIR__ . '/app/controllers/api-stats.php',
     'diag' => __DIR__ . '/app/views/diagnostics.php'
 ];
 

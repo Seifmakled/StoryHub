@@ -44,8 +44,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $hashed_password = password_hash($password, PASSWORD_DEFAULT);
                 
                 $insertStmt = $db->prepare("
-                    INSERT INTO users (username, email, password, full_name, is_verified) 
-                    VALUES (:username, :email, :password_hash, :full_name, :is_verified)
+                    INSERT INTO users (username, email, password, full_name, is_verified, status) 
+                    VALUES (:username, :email, :password_hash, :full_name, :is_verified, 'active')
                 ");
                 
                 $result = $insertStmt->execute([

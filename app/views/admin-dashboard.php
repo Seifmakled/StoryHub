@@ -126,7 +126,7 @@ include __DIR__ . '/../partials/header.php';
                 </div>
                 <div class="stat-content">
                     <span class="stat-label">Total Users</span>
-                    <h3 class="stat-value">1,234</h3>
+                    <h3 class="stat-value" id="statUsers">—</h3>
                     <span class="stat-change positive">
                         <i class="fas fa-arrow-up"></i> 12% from last month
                     </span>
@@ -139,7 +139,7 @@ include __DIR__ . '/../partials/header.php';
                 </div>
                 <div class="stat-content">
                     <span class="stat-label">Total Articles</span>
-                    <h3 class="stat-value">5,678</h3>
+                    <h3 class="stat-value" id="statArticles">—</h3>
                     <span class="stat-change positive">
                         <i class="fas fa-arrow-up"></i> 8% from last month
                     </span>
@@ -152,7 +152,7 @@ include __DIR__ . '/../partials/header.php';
                 </div>
                 <div class="stat-content">
                     <span class="stat-label">Total Views</span>
-                    <h3 class="stat-value">123.5K</h3>
+                    <h3 class="stat-value" id="statViews">—</h3>
                     <span class="stat-change positive">
                         <i class="fas fa-arrow-up"></i> 23% from last month
                     </span>
@@ -165,7 +165,7 @@ include __DIR__ . '/../partials/header.php';
                 </div>
                 <div class="stat-content">
                     <span class="stat-label">Total Comments</span>
-                    <h3 class="stat-value">8,456</h3>
+                    <h3 class="stat-value" id="statComments">—</h3>
                     <span class="stat-change negative">
                         <i class="fas fa-arrow-down"></i> 3% from last month
                     </span>
@@ -220,28 +220,8 @@ include __DIR__ . '/../partials/header.php';
                                 <th>Actions</th>
                             </tr>
                         </thead>
-                        <tbody>
-                            <?php for ($i = 1; $i <= 5; $i++): ?>
-                            <tr>
-                                <td>
-                                    <div class="table-title">
-                                        <img src="public/images/article-placeholder.jpg" alt="">
-                                        <span>Article Title Goes Here</span>
-                                    </div>
-                                </td>
-                                <td>John Doe</td>
-                                <td><span class="badge-cat">Technology</span></td>
-                                <td><span class="badge-status published">Published</span></td>
-                                <td>1,234</td>
-                                <td>
-                                    <div class="action-buttons">
-                                        <button class="btn-icon" title="View"><i class="fas fa-eye"></i></button>
-                                        <button class="btn-icon" title="Edit"><i class="fas fa-edit"></i></button>
-                                        <button class="btn-icon" title="Delete"><i class="fas fa-trash"></i></button>
-                                    </div>
-                                </td>
-                            </tr>
-                            <?php endfor; ?>
+                        <tbody id="articlesTableBody">
+                            <tr><td colspan="6">Loading articles...</td></tr>
                         </tbody>
                     </table>
                 </div>

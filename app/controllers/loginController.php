@@ -23,7 +23,7 @@ if (empty($email_or_username) || empty($password)) {
 
 try {
     // MODIFICATION 1: Add the 'is_admin' column to the SELECT statement.
-    $sql = "SELECT id, full_name, username, email, password, is_admin FROM users WHERE email = ? OR username = ?";
+    $sql = "SELECT id, full_name, username, email, password, is_admin, status FROM users WHERE email = ? OR username = ?";
     $stmt = $pdo->prepare($sql);
     $stmt->execute([$email_or_username, $email_or_username]);
     $user = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -34,6 +34,10 @@ try {
     }
 
     if (password_verify($password, $user['password'])) {
+        if (isset($user['status']) && $user['status'] === 'banned') {
+            header("Location: /StoryHub/index.php?url=login&error=banned");
+            exit();
+        }
         
         // Setup standard session variables
         $_SESSION['user_id'] = $user['id'];

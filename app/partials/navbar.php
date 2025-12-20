@@ -28,21 +28,9 @@
                         </a>
                     </li>
                     <li class="nav-user">
-                        <div class="user-dropdown">
+                        <a href="/StoryHub/index.php?url=my-profile">
                             <img src="public/images/<?php echo $_SESSION['profile_image'] ?? 'default-avatar.jpg'; ?>" alt="Profile" class="nav-avatar">
-                            <div class="dropdown-content">
-                                <a href="/StoryHub/index.php?url=my-profile">
-                                    <i class="fas fa-user"></i> Profile
-                                </a>
-                                <a href="/StoryHub/index.php?url=settings">
-                                    <i class="fas fa-cog"></i> Settings
-                                </a>
-                                <hr>
-                                <a href="/StoryHub/index.php?url=logout">
-                                    <i class="fas fa-sign-out-alt"></i> Logout
-                                </a>
-                            </div>
-                        </div>
+                        </a>
                     </li>
                 <?php else: ?>
                     <li><a href="/StoryHub/index.php?url=login" class="btn-login">Sign In</a></li>
