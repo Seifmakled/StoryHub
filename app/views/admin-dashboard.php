@@ -11,7 +11,7 @@ $pageDescription = 'Admin dashboard';
 $pageCSS = 'admin-dashboard.css';
 $pageJS = 'admin-dashboard.js';
 
-include '../partials/header.php';
+include __DIR__ . '/../partials/header.php';
 ?>
 
 <!-- Chart.js for Admin Dashboard -->
@@ -279,4 +279,4 @@ include '../partials/header.php';
     </main>
 </div>
 
-<?php include '../partials/footer.php'; ?>
+<?php include __DIR__ . '/../partials/footer.php'; ?>

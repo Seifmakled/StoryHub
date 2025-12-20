@@ -23,6 +23,7 @@ $routes = [
     'admin' => __DIR__ . '/app/views/admin-dashboard.php',
     'explore' => __DIR__ . '/app/views/explore.php',
     'article' => __DIR__ . '/app/views/article.php',
+    'write' => __DIR__ . '/app/views/write.php',
     'logout' => __DIR__ . '/app/views/logout.php',
     'api-users' => __DIR__ . '/app/controllers/api-users.php',
     'api-me' => __DIR__ . '/app/controllers/api-me.php',

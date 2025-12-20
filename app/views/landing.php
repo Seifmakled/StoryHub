@@ -33,60 +33,8 @@ include __DIR__ . '/../partials/navbar.php';
             <a href="/StoryHub/index.php?url=explore&filter=featured" class="view-all">View All <i class="fas fa-arrow-right"></i></a>
         </div>
         
-        <div class="featured-grid">
-            <!-- Featured Article 1 -->
-            <div class="featured-card featured-large">
-                <div class="featured-image">
-                    <img src="public/images/article-placeholder.jpg" alt="Article">
-                    <span class="featured-badge">Featured</span>
-                </div>
-                <div class="featured-content">
-                    <div class="featured-meta">
-                        <span class="category">Technology</span>
-                        <span class="reading-time"><i class="far fa-clock"></i> 8 min read</span>
-                    </div>
-                    <h3>The Future of Artificial Intelligence in Everyday Life</h3>
-                    <p>Exploring how AI is transforming the way we live, work, and interact with technology in our daily routines...</p>
-                    <div class="author-info">
-                        <img src="public/images/default-avatar.jpg" alt="Author" class="author-avatar">
-                        <div class="author-details">
-                            <span class="author-name">Jane Doe</span>
-                            <span class="publish-date">May 15, 2024</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Featured Article 2 & 3 -->
-            <div class="featured-small-grid">
-                <div class="featured-card featured-small">
-                    <div class="featured-image">
-                        <img src="public/images/article-placeholder.jpg" alt="Article">
-                    </div>
-                    <div class="featured-content">
-                        <span class="category">Design</span>
-                        <h4>Minimalist Web Design Trends</h4>
-                        <div class="author-info">
-                            <img src="public/images/default-avatar.jpg" alt="Author" class="author-avatar">
-                            <span class="author-name">John Smith</span>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="featured-card featured-small">
-                    <div class="featured-image">
-                        <img src="public/images/article-placeholder.jpg" alt="Article">
-                    </div>
-                    <div class="featured-content">
-                        <span class="category">Travel</span>
-                        <h4>Hidden Gems of Southeast Asia</h4>
-                        <div class="author-info">
-                            <img src="public/images/default-avatar.jpg" alt="Author" class="author-avatar">
-                            <span class="author-name">Sarah Lee</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
+        <div class="featured-grid" id="featuredGrid">
+            <div class="empty-state loading">Loading featured stories...</div>
         </div>
     </div>
 </section>
@@ -99,26 +47,8 @@ include __DIR__ . '/../partials/navbar.php';
             <a href="/StoryHub/index.php?url=explore&filter=trending" class="view-all">View All <i class="fas fa-arrow-right"></i></a>
         </div>
         
-        <div class="trending-grid">
-            <?php for ($i = 1; $i <= 6; $i++): ?>
-            <div class="trending-card">
-                <div class="trending-image">
-                    <img src="public/images/article-placeholder.jpg" alt="Article">
-                    <div class="trending-overlay">
-                        <span class="trending-number">#<?php echo $i; ?></span>
-                    </div>
-                </div>
-                <div class="trending-content">
-                    <span class="category">Category</span>
-                    <h3>Article Title Goes Here and It Can Be Long</h3>
-                    <div class="article-stats">
-                        <span><i class="fas fa-eye"></i> 2.5k</span>
-                        <span><i class="fas fa-heart"></i> 342</span>
-                        <span><i class="fas fa-comment"></i> 89</span>
-                    </div>
-                </div>
-            </div>
-            <?php endfor; ?>
+        <div class="trending-grid" id="trendingGrid">
+            <div class="empty-state loading">Loading trending stories...</div>
         </div>
     </div>
 </section>

@@ -35,7 +35,7 @@ if (!class_exists('Database')) {
 
     <!-- Page-specific JavaScript -->
 <?php if (isset($pageJS)): ?>
-    <script src="/StoryHub/public/js/<?php echo $pageJS; ?>"></script>
+    <script src="/StoryHub/public/js/<?php echo $pageJS; ?>" defer></script>
 <?php endif; ?>
 </head>
 <body>

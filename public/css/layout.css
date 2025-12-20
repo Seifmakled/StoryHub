@@ -65,7 +65,7 @@ body {
     animation: loader-float 1.4s ease-in-out infinite;
 }
 
-/* Style 3: smooth zoom */
+/* Style 3: smooth zoom */  
 .loader-style-zoom {
     animation: loader-zoom 1.3s ease-in-out infinite;
     transform-origin: center;
