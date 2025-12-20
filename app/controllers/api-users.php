@@ -2,6 +2,10 @@
 // Simple Users API for admin dashboard
 // Endpoints via index.php?url=api-users
 
+if (session_status() === PHP_SESSION_NONE) {
+	session_start();
+}
+
 if (!isset($conn)) {
 	require_once __DIR__ . '/../../config/db.php';
 	$database = new Database();
@@ -29,6 +33,77 @@ function readJsonBody() {
 
 try {
 	if ($method === 'GET') {
+		// Public profile fetch: index.php?url=api-users&id=123
+		$id = isset($_GET['id']) ? (int)$_GET['id'] : 0;
+		if ($id > 0) {
+			// Basic user info
+			$stmt = $conn->prepare('SELECT id, username, full_name, bio, profile_image, created_at FROM users WHERE id = ?');
+			$stmt->execute([$id]);
+			$user = $stmt->fetch();
+			if (!$user) {
+				http_response_code(404);
+				echo json_encode(['error' => 'User not found']);
+				exit;
+			}
+
+			$stats = [
+				'articles' => 0,
+				'followers' => 0,
+				'following' => 0,
+				'likes' => 0,
+			];
+
+			// Articles count (published only for public profile)
+			$stmt = $conn->prepare('SELECT COUNT(*) AS c FROM articles WHERE user_id = ? AND is_published = 1');
+			$stmt->execute([$id]);
+			$stats['articles'] = (int)$stmt->fetch()['c'];
+
+			// Followers count (follows schema: follower_id -> followee_id)
+			$stmt = $conn->prepare('SELECT COUNT(*) AS c FROM follows WHERE followee_id = ?');
+			$stmt->execute([$id]);
+			$stats['followers'] = (int)$stmt->fetch()['c'];
+
+			// Following count
+			$stmt = $conn->prepare('SELECT COUNT(*) AS c FROM follows WHERE follower_id = ?');
+			$stmt->execute([$id]);
+			$stats['following'] = (int)$stmt->fetch()['c'];
+
+			// Likes received across this user's articles
+			$stmt = $conn->prepare('SELECT COUNT(*) AS c FROM likes l JOIN articles a ON a.id = l.article_id WHERE a.user_id = ?');
+			$stmt->execute([$id]);
+			$stats['likes'] = (int)$stmt->fetch()['c'];
+
+			// Viewer context (optional)
+			$viewerId = isset($_SESSION['user_id']) ? (int)$_SESSION['user_id'] : 0;
+			$isFollowing = false;
+			if ($viewerId > 0 && $viewerId !== $id) {
+				$stmt = $conn->prepare('SELECT 1 FROM follows WHERE follower_id = ? AND followee_id = ? LIMIT 1');
+				$stmt->execute([$viewerId, $id]);
+				$isFollowing = (bool)$stmt->fetchColumn();
+			}
+
+			// Recent published articles for the profile
+			$stmt = $conn->prepare(
+				'SELECT a.id, a.title, a.slug, a.excerpt, a.featured_image, a.views, a.created_at,
+						(SELECT COUNT(*) FROM likes l WHERE l.article_id = a.id) AS likes_count,
+						(SELECT COUNT(*) FROM comments c WHERE c.article_id = a.id) AS comments_count
+				 FROM articles a
+				 WHERE a.user_id = ? AND a.is_published = 1
+				 ORDER BY a.created_at DESC
+				 LIMIT 24'
+			);
+			$stmt->execute([$id]);
+			$articles = $stmt->fetchAll();
+
+			echo json_encode([
+				'user' => $user,
+				'stats' => $stats,
+				'is_following' => $isFollowing,
+				'articles' => $articles,
+			]);
+			exit;
+		}
+
 		// List users (try to get common fields, handle different table structures)
 		try {
 			// First, get table structure to see what columns exist

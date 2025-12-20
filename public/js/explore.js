@@ -35,7 +35,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const mins = readingTime(a.excerpt);
             const date = a.created_at ? new Date(a.created_at).toLocaleDateString() : '';
             return `
-            <article class="explore-card" data-slug="${a.slug}">
+            <article class="explore-card" data-slug="${a.slug}" data-id="${a.id}">
                 <div class="card-image">
                     <img src="${cover}" alt="Article">
                     <div class="card-overlay">
@@ -85,14 +85,30 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         });
 
+        const postAction = async (payload) => {
+            const fd = new FormData();
+            Object.entries(payload).forEach(([k, v]) => fd.append(k, v));
+            const res = await fetch(`${base}index.php?url=api-social`, { method: 'POST', body: fd });
+            if (!res.ok) throw new Error('auth');
+            return res.json();
+        };
+
         articlesContainer.querySelectorAll('.btn-save').forEach(btn => {
-            btn.addEventListener('click', (e) => {
+            btn.addEventListener('click', async (e) => {
                 e.preventDefault();
                 e.stopPropagation();
-                btn.classList.toggle('saved');
-                const icon = btn.querySelector('i');
-                icon.classList.toggle('far', !btn.classList.contains('saved'));
-                icon.classList.toggle('fas', btn.classList.contains('saved'));
+                const card = btn.closest('.explore-card');
+                const slug = card?.getAttribute('data-slug');
+                const articleId = card?.getAttribute('data-id');
+                try {
+                    await postAction({ action: 'save', article_id: articleId || '', slug: slug || '' });
+                    btn.classList.toggle('saved');
+                    const icon = btn.querySelector('i');
+                    icon.classList.toggle('far', !btn.classList.contains('saved'));
+                    icon.classList.toggle('fas', btn.classList.contains('saved'));
+                } catch (err) {
+                    alert('Sign in to save stories.');
+                }
             });
         });
     };

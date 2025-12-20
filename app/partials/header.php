@@ -28,6 +28,15 @@ if (!class_exists('Database')) {
     <!-- Global layout interactions (loader, nav helpers) -->
     <script src="/StoryHub/public/js/layout.js" defer></script>
 
+    <script>
+        // Base path for fetch() and asset URLs when hosted under a subfolder (e.g. /StoryHub/)
+        window.APP_BASE = <?php
+            $base = rtrim(str_replace('\\', '/', dirname($_SERVER['SCRIPT_NAME'] ?? '/')), '/');
+            $base = ($base === '' ? '/' : ($base . '/'));
+            echo json_encode($base);
+        ?>;
+    </script>
+
     <!-- Loads CSS of the current page -->
     <?php if (isset($pageCSS)): ?>
         <link rel="stylesheet" href="/StoryHub/public/css/<?php echo $pageCSS; ?>">

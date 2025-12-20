@@ -23,6 +23,18 @@ include __DIR__ . '/../partials/navbar.php';
                 <div class="author-name" id="authorName">—</div>
                 <div class="author-meta" id="authorMeta">—</div>
             </div>
+            <button class="btn-follow" id="followBtn" type="button">Follow</button>
+        </div>
+        <div class="article-actions">
+            <button class="action-btn like" id="likeBtn" type="button" aria-pressed="false">
+                <span class="action-icon"><i class="fas fa-heart"></i></span>
+                <span class="action-text">Like</span>
+                <span class="action-count" id="likeCount">0</span>
+            </button>
+            <button class="action-btn save" id="saveBtn" type="button" aria-pressed="false">
+                <span class="action-icon"><i class="fas fa-bookmark"></i></span>
+                <span class="action-text" id="saveLabel">Save</span>
+            </button>
         </div>
         <div class="article-tags" id="articleTags"></div>
     </div>
@@ -30,6 +42,27 @@ include __DIR__ . '/../partials/navbar.php';
     <article class="article-body" id="articleBody">
         <div class="empty-state loading">Loading content...</div>
     </article>
+
+    <section class="article-comments" id="comments">
+        <div class="comments-head">
+            <h3>Comments</h3>
+            <div class="tiny-text" id="commentStatus"></div>
+        </div>
+        <form id="commentForm" method="post" action="">
+            <div class="comment-compose">
+                <img class="comment-avatar" src="/StoryHub/public/images/<?php echo $_SESSION['profile_image'] ?? 'default-avatar.jpg'; ?>" alt="Your avatar">
+                <div class="comment-input-wrap">
+                    <textarea id="commentInput" placeholder="Write a comment..." rows="3"></textarea>
+                    <div class="comment-actions">
+                        <button type="submit" class="comment-submit" id="commentSubmit">Post</button>
+                    </div>
+                </div>
+            </div>
+        </form>
+        <div class="comments-list" id="commentsList">
+            <div class="empty-state loading">Loading comments...</div>
+        </div>
+    </section>
 </div>
 
 <?php include __DIR__ . '/../partials/footer.php'; ?>

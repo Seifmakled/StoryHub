@@ -7,8 +7,8 @@ $pageJS = 'profile.js';
 include __DIR__ . '/../partials/header.php';
 include __DIR__ . '/../partials/navbar.php';
 
-// Mock user data (replace with actual database query)
-$isOwnProfile = isset($_SESSION['user_id']) && isset($_GET['id']) && $_SESSION['user_id'] == $_GET['id'];
+// Determine if viewing own profile
+$isOwnProfile = isset($_SESSION['user_id']) && isset($_GET['id']) && (int)$_SESSION['user_id'] === (int)$_GET['id'];
 ?>
 
 <div class="profile-container">
@@ -35,8 +35,8 @@ $isOwnProfile = isset($_SESSION['user_id']) && isset($_GET['id']) && $_SESSION['
 
             <div class="profile-info">
                 <div class="profile-info-main">
-                    <h1 class="profile-name">John Doe</h1>
-                    <p class="profile-username">@johndoe</p>
+                    <h1 class="profile-name" id="profileName">User</h1>
+                    <p class="profile-username" id="profileUsername"></p>
                 </div>
 
                 <div class="profile-actions">
@@ -45,35 +45,32 @@ $isOwnProfile = isset($_SESSION['user_id']) && isset($_GET['id']) && $_SESSION['
                         <i class="fas fa-cog"></i> Edit Profile
                     </button>
                     <?php else: ?>
-                    <button class="btn btn-primary" id="followBtn">
+                    <button class="btn btn-primary" id="followBtn" type="button" style="display:none">
                         <i class="fas fa-user-plus"></i> Follow
-                    </button>
-                    <button class="btn btn-outline">
-                        <i class="fas fa-envelope"></i> Message
                     </button>
                     <?php endif; ?>
                 </div>
             </div>
 
             <div class="profile-bio">
-                <p>Passionate writer and storyteller. Love exploring new ideas and sharing experiences through words. ✍️</p>
+                <p id="profileBio"></p>
             </div>
 
             <div class="profile-stats">
                 <div class="stat-item">
-                    <span class="stat-value">42</span>
+                    <span class="stat-value" id="statArticles">0</span>
                     <span class="stat-label">Articles</span>
                 </div>
                 <div class="stat-item">
-                    <span class="stat-value">1.2K</span>
+                    <span class="stat-value" id="statFollowers">0</span>
                     <span class="stat-label">Followers</span>
                 </div>
                 <div class="stat-item">
-                    <span class="stat-value">856</span>
+                    <span class="stat-value" id="statFollowing">0</span>
                     <span class="stat-label">Following</span>
                 </div>
                 <div class="stat-item">
-                    <span class="stat-value">3.5K</span>
+                    <span class="stat-value" id="statLikes">0</span>
                     <span class="stat-label">Likes</span>
                 </div>
             </div>
@@ -86,12 +83,6 @@ $isOwnProfile = isset($_SESSION['user_id']) && isset($_GET['id']) && $_SESSION['
             <button class="tab-btn active" data-tab="articles">
                 <i class="fas fa-newspaper"></i> Articles
             </button>
-            <button class="tab-btn" data-tab="liked">
-                <i class="fas fa-heart"></i> Liked
-            </button>
-            <button class="tab-btn" data-tab="saved">
-                <i class="fas fa-bookmark"></i> Saved
-            </button>
             <button class="tab-btn" data-tab="about">
                 <i class="fas fa-info-circle"></i> About
             </button>
@@ -99,65 +90,7 @@ $isOwnProfile = isset($_SESSION['user_id']) && isset($_GET['id']) && $_SESSION['
 
         <!-- Articles Tab -->
         <div class="tab-content active" id="articles-tab">
-            <div class="articles-grid">
-                <?php for ($i = 1; $i <= 6; $i++): ?>
-                <article class="article-card">
-                    <div class="article-image">
-                        <img src="public/images/article-placeholder.jpg" alt="Article">
-                        <?php if ($isOwnProfile): ?>
-                        <div class="article-menu">
-                            <button class="btn-menu"><i class="fas fa-ellipsis-v"></i></button>
-                            <div class="menu-dropdown">
-                                <a href="#edit"><i class="fas fa-edit"></i> Edit</a>
-                                <a href="#delete"><i class="fas fa-trash"></i> Delete</a>
-                            </div>
-                        </div>
-                        <?php endif; ?>
-                    </div>
-                    <div class="article-content">
-                        <span class="article-category">Technology</span>
-                        <h3>The Future of Web Development in 2024</h3>
-                        <p>Exploring the latest trends and technologies shaping the future of web development...</p>
-                        <div class="article-meta">
-                            <span class="article-date"><i class="far fa-calendar"></i> May 15, 2024</span>
-                            <div class="article-stats">
-                                <span><i class="fas fa-eye"></i> 1.2K</span>
-                                <span><i class="fas fa-heart"></i> 234</span>
-                            </div>
-                        </div>
-                    </div>
-                </article>
-                <?php endfor; ?>
-            </div>
-        </div>
-
-        <!-- Liked Tab -->
-        <div class="tab-content" id="liked-tab">
-            <div class="articles-list">
-                <?php for ($i = 1; $i <= 5; $i++): ?>
-                <div class="article-list-item">
-                    <img src="public/images/article-placeholder.jpg" alt="Article">
-                    <div class="article-list-content">
-                        <h4>Article Title Goes Here</h4>
-                        <p>Brief excerpt of the article content...</p>
-                        <div class="article-list-meta">
-                            <span>by <strong>Author Name</strong></span>
-                            <span>May 15, 2024</span>
-                        </div>
-                    </div>
-                </div>
-                <?php endfor; ?>
-            </div>
-        </div>
-
-        <!-- Saved Tab -->
-        <div class="tab-content" id="saved-tab">
-            <div class="articles-list">
-                <p class="empty-state">
-                    <i class="fas fa-bookmark"></i>
-                    <span>No saved articles yet</span>
-                </p>
-            </div>
+            <div class="articles-grid" id="profileArticlesContainer"></div>
         </div>
 
         <!-- About Tab -->
@@ -165,7 +98,7 @@ $isOwnProfile = isset($_SESSION['user_id']) && isset($_GET['id']) && $_SESSION['
             <div class="about-section">
                 <div class="about-card">
                     <h3><i class="fas fa-user"></i> About</h3>
-                    <p>Passionate writer and storyteller with a love for technology and innovation. Been writing for 5+ years and sharing insights on web development, design, and entrepreneurship.</p>
+                    <p id="aboutText"></p>
                 </div>
 
                 <div class="about-card">
@@ -180,11 +113,11 @@ $isOwnProfile = isset($_SESSION['user_id']) && isset($_GET['id']) && $_SESSION['
 
                 <div class="about-card">
                     <h3><i class="fas fa-calendar"></i> Joined</h3>
-                    <p>Member since January 2023</p>
+                    <p id="joinedText"></p>
                 </div>
             </div>
         </div>
     </div>
 </div>
 
-<?php include '../partials/footer.php'; ?>
+<?php include __DIR__ . '/../partials/footer.php'; ?>

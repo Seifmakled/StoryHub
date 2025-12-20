@@ -50,12 +50,17 @@ try {
             // counts
             $counts = [
                 'articles' => 0,
+                'followers' => 0,
+                'following' => 0,
                 'likes' => 0,
                 'saved' => 0,
                 'comments' => 0,
             ];
 
             $counts['articles'] = (int)$conn->query("SELECT COUNT(*) AS c FROM articles WHERE user_id = $userId")->fetch()['c'];
+            // follows schema: follower_id -> followee_id
+            $counts['followers'] = (int)$conn->query("SELECT COUNT(*) AS c FROM follows WHERE followee_id = $userId")->fetch()['c'];
+            $counts['following'] = (int)$conn->query("SELECT COUNT(*) AS c FROM follows WHERE follower_id = $userId")->fetch()['c'];
             $counts['likes'] = (int)$conn->query("SELECT COUNT(*) AS c FROM likes WHERE user_id = $userId")->fetch()['c'];
             // bookmarks table is our saved
             $counts['saved'] = (int)$conn->query("SELECT COUNT(*) AS c FROM bookmarks WHERE user_id = $userId")->fetch()['c'];
@@ -107,7 +112,8 @@ try {
 
         if ($section === 'comments') {
             $stmt = $conn->prepare(
-                'SELECT c.id, c.content, c.created_at, c.updated_at, a.id AS article_id, a.title AS article_title
+                'SELECT c.id, c.content, c.created_at, c.updated_at,
+                        a.id AS article_id, a.title AS article_title, a.slug AS article_slug, a.excerpt AS article_excerpt
                  FROM comments c
                  JOIN articles a ON a.id = c.article_id
                  WHERE c.user_id = ?

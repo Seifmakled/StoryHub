@@ -12,6 +12,8 @@
     const avatarEl = qs('#profileAvatar');
     const stats = {
         articles: qs('#statArticles'),
+        followers: qs('#statFollowers'),
+        following: qs('#statFollowing'),
         likes: qs('#statLikes'),
         saved: qs('#statSaved'),
         comments: qs('#statComments')
@@ -25,7 +27,7 @@
     };
 
     async function fetchJSON(url, opts) {
-        const res = await fetch(url, opts);
+        const res = await fetch(url, { credentials: 'same-origin', ...opts });
         if (!res.ok) {
             let msg = res.statusText;
             try { const e = await res.json(); if (e && e.error) msg = e.error; } catch {}
@@ -44,6 +46,8 @@
             avatarEl.src = 'public/images/' + u.profile_image;
         }
         stats.articles.textContent = data.counts.articles;
+        if (stats.followers) stats.followers.textContent = data.counts.followers ?? 0;
+        if (stats.following) stats.following.textContent = data.counts.following ?? 0;
         stats.likes.textContent = data.counts.likes;
         stats.saved.textContent = data.counts.saved;
         stats.comments.textContent = data.counts.comments;
@@ -54,7 +58,12 @@
         qs('#bio').value = u.bio || '';
     }
 
-    function articleCard(a, owned=true) {
+    function goToArticle(slug) {
+        if (!slug) return;
+        window.location.href = `${base}index.php?url=article&slug=${encodeURIComponent(slug)}`;
+    }
+
+        function articleCard(a, owned=true) {
         const img = a.featured_image ? a.featured_image : 'article-placeholder.jpg';
         const actions = owned ? `
             <div class="article-menu">
@@ -65,7 +74,7 @@
               </div>
             </div>` : '';
         return `
-        <article class="article-card" data-id="${a.id}">
+                <article class="article-card" data-id="${a.id}" data-slug="${a.slug ? String(a.slug).replace(/"/g, '&quot;') : ''}" role="link" tabindex="0">
           <div class="article-image">
             <img src="public/images/${img}" alt="Article">
             ${actions}
@@ -85,10 +94,10 @@
         </article>`;
     }
 
-    function articleListItem(a) {
+        function articleListItem(a) {
         const img = a.featured_image ? a.featured_image : 'article-placeholder.jpg';
         return `
-        <div class="article-list-item">
+                <div class="article-list-item" data-id="${a.id}" data-slug="${a.slug ? String(a.slug).replace(/"/g, '&quot;') : ''}" role="link" tabindex="0">
           <img src="public/images/${img}" alt="Article">
           <div class="article-list-content">
             <h4>${a.title || ''}</h4>
@@ -100,16 +109,22 @@
         </div>`;
     }
 
-    function commentItem(c) {
-        return `
-        <div class="comment-item">
-          <div class="comment-meta">
-            <strong>${c.article_title || 'Article'}</strong>
-            <span>${new Date(c.created_at).toLocaleString()}</span>
-          </div>
-          <p>${c.content || ''}</p>
-        </div>`;
-    }
+                function commentItem(c) {
+                const slug = c.article_slug ? String(c.article_slug) : '';
+                const safeSlug = slug.replace(/"/g, '&quot;');
+                const title = c.article_title || 'Article';
+                const href = slug ? `${base}index.php?url=article&slug=${encodeURIComponent(slug)}` : '#';
+                const excerpt = (c.article_excerpt || '').trim();
+                return `
+                                <div class="comment-item" data-article-id="${c.article_id || ''}" data-slug="${safeSlug}" role="link" tabindex="0">
+                    <div class="comment-meta">
+                        <span>Commented on: <a class="comment-article-link" href="${href}">${title}</a></span>
+                        <span>${new Date(c.created_at).toLocaleString()}</span>
+                    </div>
+                    <p>${c.content || ''}</p>
+                    ${excerpt ? `<div class="comment-article-excerpt">${excerpt}</div>` : ''}
+                </div>`;
+        }
 
     async function loadArticles() {
         const data = await fetchJSON(base + 'index.php?url=api-me&section=articles');
@@ -126,6 +141,51 @@
     async function loadComments() {
         const data = await fetchJSON(base + 'index.php?url=api-me&section=comments');
         containers.comments.innerHTML = data.data.map(c => commentItem(c)).join('') || '<p class="empty-state"><i class="fas fa-comments"></i> <span>No comments yet</span></p>';
+    }
+
+    function setupNavigation() {
+        // My Articles grid
+        containers.articles.addEventListener('click', (e) => {
+            // Ignore menu interactions
+            if (e.target.closest('.article-menu') || e.target.closest('.btn-menu') || e.target.closest('.menu-dropdown') || e.target.closest('[data-action="delete"]')) {
+                return;
+            }
+            const card = e.target.closest('.article-card');
+            if (!card) return;
+            const slug = card.getAttribute('data-slug');
+            if (slug) goToArticle(slug);
+        });
+
+        // Saved + Liked lists
+        const listClick = (e) => {
+            const item = e.target.closest('.article-list-item');
+            if (!item) return;
+            const slug = item.getAttribute('data-slug');
+            if (slug) goToArticle(slug);
+        };
+        containers.saved.addEventListener('click', listClick);
+        containers.liked.addEventListener('click', listClick);
+
+        // Comments list
+        containers.comments.addEventListener('click', (e) => {
+            // Let explicit links behave like normal links
+            if (e.target.closest('a')) return;
+            const item = e.target.closest('.comment-item');
+            if (!item) return;
+            const slug = item.getAttribute('data-slug');
+            if (slug) goToArticle(slug);
+        });
+
+        // Keyboard accessibility (Enter to open)
+        document.addEventListener('keydown', (e) => {
+            if (e.key !== 'Enter') return;
+            const target = document.activeElement;
+            if (!target) return;
+            if (target.classList && (target.classList.contains('article-card') || target.classList.contains('article-list-item') || target.classList.contains('comment-item'))) {
+                const slug = target.getAttribute('data-slug');
+                if (slug) goToArticle(slug);
+            }
+        });
     }
 
     // Tabs
@@ -163,6 +223,7 @@
                     throw new Error(t || 'Failed to delete');
                 }
                 await loadArticles();
+                await loadOverview();
             } catch (err) {
                 alert('Error: ' + err.message);
             }
@@ -205,6 +266,7 @@
     (async function init() {
         setupTabs();
         setupDelete();
+        setupNavigation();
         setupProfileForm();
         await loadOverview();
         await loadArticles(); // default active tab

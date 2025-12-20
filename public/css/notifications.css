@@ -1,0 +1,53 @@
+/* Notifications */
+.notif-shell {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 2.2rem 1.25rem 3rem;
+}
+
+.notif-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.1rem;
+}
+
+.notif-header h1 { margin: 0; }
+
+.notif-header .muted { color: #64748b; }
+
+.btn {
+    border: 1px solid #e2e8f0;
+    background: #fff;
+    border-radius: 12px;
+    padding: 0.65rem 1rem;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.notif-list { display: grid; gap: 0.8rem; }
+
+.notif-item {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 0.8rem;
+    align-items: center;
+    padding: 0.75rem;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    background: #fff;
+}
+
+.notif-item img {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.notif-item.unread { border-color: rgba(99, 102, 241, 0.4); background: #f8faff; }
+
+.notif-message { font-weight: 600; color: #0f172a; }
+.notif-meta { color: #94a3b8; font-size: 0.9rem; }
+
+.empty-state { text-align: center; color: #94a3b8; padding: 1rem; }

@@ -37,6 +37,9 @@
                                 <a href="/StoryHub/index.php?url=settings">
                                     <i class="fas fa-cog"></i> Settings
                                 </a>
+                                <a href="/StoryHub/index.php?url=notifications">
+                                    <i class="fas fa-bell"></i> Notifications
+                                </a>
                                 <hr>
                                 <a href="/StoryHub/index.php?url=logout">
                                     <i class="fas fa-sign-out-alt"></i> Logout
