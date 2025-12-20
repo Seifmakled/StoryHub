@@ -62,6 +62,14 @@ include __DIR__ . '/../partials/navbar.php';
                     <span class="stat-label">Articles</span>
                 </div>
                 <div class="stat-item">
+                    <span class="stat-value" id="statFollowers">0</span>
+                    <span class="stat-label">Followers</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-value" id="statFollowing">0</span>
+                    <span class="stat-label">Following</span>
+                </div>
+                <div class="stat-item">
                     <span class="stat-value" id="statLikes">0</span>
                     <span class="stat-label">Likes</span>
                 </div>

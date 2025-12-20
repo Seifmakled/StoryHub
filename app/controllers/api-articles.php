@@ -128,7 +128,10 @@ try {
                         a.is_published, a.created_at, a.updated_at, a.views,
                         u.username, u.full_name, u.profile_image,
                         (SELECT COUNT(*) FROM likes l WHERE l.article_id = a.id) AS likes_count,
-                        (SELECT COUNT(*) FROM comments c WHERE c.article_id = a.id) AS comments_count
+                        (SELECT COUNT(*) FROM comments c WHERE c.article_id = a.id) AS comments_count,
+                        ' . ($userId ? '(SELECT 1 FROM likes l2 WHERE l2.article_id = a.id AND l2.user_id = ' . $userId . ' LIMIT 1)' : 'NULL') . ' AS is_liked,
+                        ' . ($userId ? '(SELECT 1 FROM bookmarks b2 WHERE b2.article_id = a.id AND b2.user_id = ' . $userId . ' LIMIT 1)' : 'NULL') . ' AS is_saved,
+                        ' . ($userId ? '(SELECT 1 FROM follows f WHERE f.follower_id = ' . $userId . ' AND f.followee_id = a.user_id LIMIT 1)' : 'NULL') . ' AS is_following_author
                  FROM articles a
                  JOIN users u ON u.id = a.user_id
                  WHERE ' . ($id ? 'a.id = ?' : 'a.slug = ?') . ' AND (a.is_published = 1 OR a.user_id = ?)

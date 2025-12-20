@@ -145,6 +145,36 @@ class Database {
                     CONSTRAINT `fk_comments_article` FOREIGN KEY (`article_id`) REFERENCES `articles`(`id`) ON DELETE CASCADE
                 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;"
             );
+
+            // Follows table
+            self::$conn->exec(
+                "CREATE TABLE IF NOT EXISTS `follows` (
+                    `id` INT AUTO_INCREMENT PRIMARY KEY,
+                    `follower_id` INT NOT NULL,
+                    `followee_id` INT NOT NULL,
+                    `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                    UNIQUE KEY `uniq_follow` (`follower_id`, `followee_id`),
+                    INDEX (`followee_id`),
+                    CONSTRAINT `fk_follows_follower` FOREIGN KEY (`follower_id`) REFERENCES `users`(`id`) ON DELETE CASCADE,
+                    CONSTRAINT `fk_follows_followee` FOREIGN KEY (`followee_id`) REFERENCES `users`(`id`) ON DELETE CASCADE
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;"
+            );
+
+            // Notifications table
+            self::$conn->exec(
+                "CREATE TABLE IF NOT EXISTS `notifications` (
+                    `id` INT AUTO_INCREMENT PRIMARY KEY,
+                    `user_id` INT NOT NULL,
+                    `actor_id` INT NULL,
+                    `type` VARCHAR(50) NOT NULL,
+                    `entity_id` INT NULL,
+                    `message` VARCHAR(255) NOT NULL,
+                    `is_read` TINYINT(1) NOT NULL DEFAULT 0,
+                    `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                    INDEX (`user_id`),
+                    CONSTRAINT `fk_notifications_user` FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON DELETE CASCADE
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;"
+            );
         } catch (PDOException $e) {
             die('Table creation failed: ' . $e->getMessage());
         }
