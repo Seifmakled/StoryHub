@@ -71,6 +71,39 @@ include __DIR__ . '/../partials/navbar.php';?>
                     </div>
                 </div>
             </div>
+
+            <div class="explore-metrics">
+                <div class="metric-card">
+                    <div class="metric-label">Stories</div>
+                    <div class="metric-value">12.4k</div>
+                    <div class="metric-sub">+180 this week</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-label">Writers</div>
+                    <div class="metric-value">3.1k</div>
+                    <div class="metric-sub">Now active</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-label">Topics</div>
+                    <div class="metric-value">42</div>
+                    <div class="metric-sub">Fresh tags added</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-label">Trending</div>
+                    <div class="metric-value">AI · Travel · UX</div>
+                    <div class="metric-sub">Updated hourly</div>
+                </div>
+            </div>
+
+            <div class="chip-row">
+                <button class="chip">AI</button>
+                <button class="chip">Productivity</button>
+                <button class="chip">Design Systems</button>
+                <button class="chip">Remote Work</button>
+                <button class="chip">Health</button>
+                <button class="chip">Photography</button>
+                <button class="chip">Finance</button>
+            </div>
         </div>
     </div>
 
@@ -90,41 +123,7 @@ include __DIR__ . '/../partials/navbar.php';?>
             </div>
 
             <div class="articles-container grid-view" id="articlesContainer">
-                <?php for ($i = 1; $i <= 12; $i++): ?>
-                <article class="explore-card">
-                    <div class="card-image">
-                        <img src="public/images/article-placeholder.jpg" alt="Article">
-                        <div class="card-overlay">
-                            <button class="btn-save" title="Save article">
-                                <i class="far fa-bookmark"></i>
-                            </button>
-                        </div>
-                    </div>
-                    <div class="card-content">
-                        <div class="card-meta">
-                            <span class="category">Technology</span>
-                            <span class="reading-time"><i class="far fa-clock"></i> 5 min</span>
-                        </div>
-                        <h3>Understanding Modern Web Development Frameworks</h3>
-                        <p>An in-depth look at the most popular frameworks and how they're shaping the future of web development...</p>
-                        
-                        <div class="card-footer">
-                            <div class="author-info">
-                                <img src="public/images/default-avatar.jpg" alt="Author">
-                                <div class="author-details">
-                                    <span class="author-name">John Doe</span>
-                                    <span class="publish-date">May 15, 2024</span>
-                                </div>
-                            </div>
-                            <div class="card-stats">
-                                <span title="Views"><i class="fas fa-eye"></i> 1.2K</span>
-                                <span title="Likes"><i class="fas fa-heart"></i> 234</span>
-                                <span title="Comments"><i class="fas fa-comment"></i> 45</span>
-                            </div>
-                        </div>
-                    </div>
-                </article>
-                <?php endfor; ?>
+                <div class="empty-state loading">Loading articles...</div>
             </div>
 
             <!-- Pagination -->

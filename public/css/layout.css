@@ -26,6 +26,151 @@ body {
     background: var(--light-color);
 }
 
+/* Page loader overlay */
+.page-loader {
+    position: fixed;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: radial-gradient(circle at 20% 20%, rgba(99, 102, 241, 0.07), transparent 45%),
+                radial-gradient(circle at 80% 30%, rgba(236, 72, 153, 0.08), transparent 45%),
+                #f8fafc;
+    z-index: 2000;
+    transition: opacity 0.35s ease, visibility 0.35s ease;
+}
+
+.page-loader.is-hidden {
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+}
+
+.loader-card {
+    background: transparent;
+    padding: 0;
+    border-radius: 0;
+    box-shadow: none;
+    min-width: auto;
+    text-align: center;
+}
+
+/* Style 1: subtle pulse (legacy) */
+.loader-style-1 {
+    animation: loader-pulse 1.2s ease-in-out infinite;
+}
+
+/* Style 2: float + tilt (optional) */
+.loader-style-2 {
+    animation: loader-float 1.4s ease-in-out infinite;
+}
+
+/* Style 3: smooth zoom */  
+.loader-style-zoom {
+    animation: loader-zoom 1.3s ease-in-out infinite;
+    transform-origin: center;
+}
+
+/* Style 4: soft fade + zoom */
+.loader-style-fade {
+    animation: loader-fade-cycle 1.35s ease-in-out infinite;
+    transform-origin: center;
+}
+
+/* Style 5: breathe (big to small loop) */
+.loader-style-breathe {
+    animation: loader-breathe 1.25s ease-in-out infinite;
+    transform-origin: center;
+}
+
+/* Style 6: single big-to-small with fade (default) */
+.loader-style-once {
+    animation: loader-once 4.0s cubic-bezier(0.33, 0.65, 0.4, 1) forwards;
+    transform-origin: center;
+}
+
+.loader-logo {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.7rem;
+    font-weight: 800;
+    font-size: 1.4rem;
+    color: var(--primary-color);
+    margin-bottom: 1rem;
+    letter-spacing: 0.05em;
+}
+
+.loader-logo i {
+    font-size: 1.6rem;
+}
+
+.loader-bar {
+    width: 200px;
+    height: 6px;
+    background: rgba(148, 163, 184, 0.4);
+    border-radius: 999px;
+    overflow: hidden;
+    position: relative;
+    margin: 0 auto;
+}
+
+.loader-progress {
+    display: block;
+    height: 100%;
+    width: 0%;
+    background: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
+    border-radius: 999px;
+    animation: loader-fill 1s linear forwards;
+}
+
+@keyframes loader-sweep {
+    0% { transform: translateX(-120%); }
+    50% { transform: translateX(0%); }
+    100% { transform: translateX(120%); }
+}
+
+@keyframes loader-pulse {
+    0% { transform: scale(0.94); opacity: 0.85; }
+    50% { transform: scale(1.02); opacity: 1; }
+    100% { transform: scale(0.94); opacity: 0.85; }
+}
+
+@keyframes loader-float {
+    0% { transform: translateY(2px) rotate(-1deg) scale(0.98); opacity: 0.9; }
+    40% { transform: translateY(-4px) rotate(1deg) scale(1.01); opacity: 1; }
+    70% { transform: translateY(1px) rotate(-0.5deg) scale(1); opacity: 0.96; }
+    100% { transform: translateY(2px) rotate(-1deg) scale(0.98); opacity: 0.9; }
+}
+
+@keyframes loader-zoom {
+    0% { transform: scale(0.96); opacity: 0.9; }
+    45% { transform: scale(1.06); opacity: 1; }
+    100% { transform: scale(0.96); opacity: 0.9; }
+}
+
+@keyframes loader-fade-cycle {
+    0% { transform: scale(0.95); opacity: 0.4; }
+    25% { transform: scale(1.03); opacity: 0.9; }
+    55% { transform: scale(1.08); opacity: 1; }
+    100% { transform: scale(0.95); opacity: 0.4; }
+}
+
+@keyframes loader-breathe {
+    0% { transform: scale(1.06); opacity: 1; }
+    45% { transform: scale(0.92); opacity: 0.92; }
+    100% { transform: scale(1.06); opacity: 1; }
+}
+
+@keyframes loader-once {
+    0% { transform: scale(1.3); opacity: 1; }
+    100% { transform: scale(0.85); opacity: 0; }
+}
+
+@keyframes loader-fill {
+    0% { width: 0%; }
+    100% { width: 100%; }
+}
+
 /* Navbar */
 .navbar {
     background: white;
