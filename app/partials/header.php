@@ -25,6 +25,9 @@ if (!class_exists('Database')) {
     <!-- Global Layout CSS (navbar + footer) -->
     <link rel="stylesheet" href="/StoryHub/public/css/layout.css">
 
+    <!-- Global layout interactions (loader, nav helpers) -->
+    <script src="/StoryHub/public/js/layout.js" defer></script>
+
     <!-- Loads CSS of the current page -->
     <?php if (isset($pageCSS)): ?>
         <link rel="stylesheet" href="/StoryHub/public/css/<?php echo $pageCSS; ?>">
@@ -36,3 +39,12 @@ if (!class_exists('Database')) {
 <?php endif; ?>
 </head>
 <body>
+    <div id="page-loader" class="page-loader">
+        <div class="loader-card loader-style-once">
+            <div class="loader-logo">
+                <i class="fas fa-feather-alt"></i>
+                <span>StoryHub</span>
+            </div>
+            <div class="loader-bar"><span class="loader-progress"></span></div>
+        </div>
+    </div>
