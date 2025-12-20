@@ -5,7 +5,7 @@ if (session_status() === PHP_SESSION_NONE) {
 }
 
 if ($_SERVER["REQUEST_METHOD"] !== "POST") {
-    header("Location: ../../index.php?url=login&error=invalid_request");
+    header("Location: /StoryHub/index.php?url=login&error=invalid_request");
     exit();
 }
 
@@ -17,7 +17,7 @@ $email_or_username = htmlspecialchars(trim($_POST['email_or_username'] ?? ''));
 $password = $_POST['password'] ?? '';
 
 if (empty($email_or_username) || empty($password)) {
-    header("Location: ../../index.php?url=login&error=empty_fields");
+    header("Location: /StoryHub/index.php?url=login&error=empty_fields");
     exit();
 }
 
@@ -29,8 +29,7 @@ try {
     $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
     if (!$user) {
-        // a toastie is required here to show invalid login
-        header("Location: ../views/login.php"); 
+        header("Location: /StoryHub/index.php?url=login&error=user_not_found"); 
         exit();
     }
 
@@ -47,25 +46,23 @@ try {
 
         // MODIFICATION 3: Redirect based on the user's admin status.
         if ($_SESSION['is_admin']) {
-            // Redirect admin users to the admin dashboard view
-            header("Location: ../views/admin-dashboard.php"); 
+            // Redirect admin users to the admin dashboard view via router to ensure session is loaded
+            header("Location: /StoryHub/index.php?url=admin"); 
         } else {
-            // Redirect regular users to the landing page view
-            header("Location: ../views/landing.php"); 
+            // Redirect regular users to their profile (router handles session start)
+            header("Location: /StoryHub/index.php?url=my-profile"); 
         }
         exit();
         
     } else {
-
-        // a toastie is required here to show invalid login
-        header("Location: ../views/login.php"); 
+        header("Location: /StoryHub/index.php?url=login&error=invalid_credentials"); 
         exit();
     }
 
 } catch (PDOException $e) {
     // Handle database connection or query errors
     error_log("Login DB Error: " . $e->getMessage());
-    header("Location: ../../index.php?url=login&error=db_error");
+    header("Location: /StoryHub/index.php?url=login&error=db_error");
     exit();
 }
 
