@@ -9,9 +9,7 @@ if ($_SERVER["REQUEST_METHOD"] !== "POST") {
     exit();
 }
 
-require_once __DIR__ . '/../../config/db.php';
-
-$pdo = Database::getConnection(); 
+require_once __DIR__ . '/../repositories/UserRepository.php';
 
 $email_or_username = htmlspecialchars(trim($_POST['email_or_username'] ?? ''));
 $password = $_POST['password'] ?? '';
@@ -22,11 +20,9 @@ if (empty($email_or_username) || empty($password)) {
 }
 
 try {
-    // MODIFICATION 1: Add the 'is_admin' column to the SELECT statement.
-    $sql = "SELECT id, full_name, username, email, password, is_admin FROM users WHERE email = ? OR username = ?";
-    $stmt = $pdo->prepare($sql);
-    $stmt->execute([$email_or_username, $email_or_username]);
-    $user = $stmt->fetch(PDO::FETCH_ASSOC);
+    // Use Repository Pattern: UserRepository handles database access
+    $userRepository = new UserRepository();
+    $user = $userRepository->findByEmailOrUsername($email_or_username);
 
     if (!$user) {
         header("Location: /StoryHub/index.php?url=login&error=user_not_found"); 

@@ -4,7 +4,7 @@ if (!class_exists('Database')) {
     $dbPath = __DIR__ . '/../../config/db.php';
     if (is_file($dbPath)) {
         require_once $dbPath;
-        try { new Database(); } catch (Throwable $e) { /* ignore */ }
+        try { Database::getInstance(); } catch (Throwable $e) { /* ignore */ }
     }
 }
 ?>
