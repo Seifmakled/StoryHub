@@ -6,13 +6,31 @@ class Database {
     private static $pass = '';
     private static $dbname = 'blog_project';
 
+    private static $instance = null;
     private static $conn = null;
     private static $bootstrapped = false;
 
-    public function __construct() {
+    // Private constructor to prevent direct instantiation
+    private function __construct() {
         if (!self::$bootstrapped) {
             self::bootstrap();
         }
+    }
+
+    // Prevent cloning
+    private function __clone() {}
+
+    // Prevent unserialization
+    public function __wakeup() {
+        throw new Exception("Cannot unserialize singleton");
+    }
+
+    // Get the single instance of Database
+    public static function getInstance(): self {
+        if (self::$instance === null) {
+            self::$instance = new self();
+        }
+        return self::$instance;
     }
 
     public static function getConnection() {

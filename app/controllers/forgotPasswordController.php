@@ -1,21 +1,16 @@
 <?php
 // Super simple forgot password controller
-require_once __DIR__ . '/../../config/db.php';
-require_once __DIR__ . '/../../vendor/autoload.php';
-use PHPMailer\PHPMailer\PHPMailer;
-use PHPMailer\PHPMailer\Exception;
-// Load email config
-$emailConfig = require __DIR__ . '/../config/email_config.php';
+require_once __DIR__ . '/../repositories/UserRepository.php';
+require_once __DIR__ . '/../services/EmailService.php';
 
-$pdo = Database::getConnection();
+$userRepository = new UserRepository();
+$emailService = new EmailService();
 
 // Step 2: Handle code verification (check this FIRST before email submission)
 if (isset($_POST['resetCode']) && isset($_POST['email'])) {
     $email = trim($_POST['email']);
     $code = trim($_POST['resetCode']);
-    $stmt = $pdo->prepare('SELECT id, reset_token, reset_token_expiry FROM users WHERE email = ?');
-    $stmt->execute([$email]);
-    $user = $stmt->fetch(PDO::FETCH_ASSOC);
+    $user = $userRepository->findByEmail($email);
     
     
     if ($user && $user['reset_token'] === $code && strtotime($user['reset_token_expiry']) > time()) {
@@ -34,8 +29,7 @@ if (isset($_POST['newPassword']) && isset($_POST['email'])) {
     $email = trim($_POST['email']);
     $newPassword = $_POST['newPassword'];
     $hashed = password_hash($newPassword, PASSWORD_DEFAULT);
-    $stmt = $pdo->prepare('UPDATE users SET password = ?, reset_token = NULL, reset_token_expiry = NULL WHERE email = ?');
-    $stmt->execute([$hashed, $email]);
+    $userRepository->updatePasswordAndClearResetToken($email, $hashed);
     header('Location: ../../index.php?url=forgot-password&step=success');
     exit();
 }
@@ -43,34 +37,15 @@ if (isset($_POST['newPassword']) && isset($_POST['email'])) {
 // Step 1: Handle email submission (check this LAST)
 if (isset($_POST['email']) && !isset($_POST['resetCode']) && !isset($_POST['newPassword'])) {
     $email = trim($_POST['email']);
-    $stmt = $pdo->prepare('SELECT id FROM users WHERE email = ?');
-    $stmt->execute([$email]);
-    $user = $stmt->fetch(PDO::FETCH_ASSOC);
+    $user = $userRepository->findByEmail($email);
     if ($user) {
         // Generate a 6-digit code
         $code = random_int(100000, 999999);
         $expires = date('Y-m-d H:i:s', strtotime('+15 minutes'));
-        // Save code and expiry
-        $stmt = $pdo->prepare('UPDATE users SET reset_token = ?, reset_token_expiry = ? WHERE id = ?');
-        $stmt->execute([$code, $expires, $user['id']]);
-        // Send email using PHPMailer
-        $mail = new PHPMailer(true);
-        try {
-            $mail->isSMTP();
-            $mail->Host = $emailConfig['host'];
-            $mail->SMTPAuth = true;
-            $mail->Username = $emailConfig['username'];
-            $mail->Password = $emailConfig['password'];
-            $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
-            $mail->Port = $emailConfig['port'];
-            $mail->setFrom($emailConfig['from'], $emailConfig['from_name']);
-            $mail->addAddress($email);
-            $mail->Subject = 'Your StoryHub Password Reset Code';
-            $mail->Body = "Your password reset code is: $code\nThis code expires in 15 minutes.";
-            $mail->send();
-        } catch (Exception $e) {
-            // Log error or show message
-        }
+        // Save code and expiry - Using Repository
+        $userRepository->saveResetToken($user['id'], $code, $expires);
+        // Send email using EmailService
+        $emailService->sendPasswordResetEmail($email, $code);
         // Redirect to verify code step (could use session or GET param)
         header('Location: ../../index.php?url=forgot-password&step=verify&email=' . urlencode($email));
         exit();

@@ -7,94 +7,21 @@ if (session_status() === PHP_SESSION_NONE) {
 
 if (!isset($conn)) {
     require_once __DIR__ . '/../../config/db.php';
-    $database = new Database();
-    $conn = $database->getConnection();
+    $conn = Database::getInstance()->getConnection();
 }
+
+require_once __DIR__ . '/../services/ArticleService.php';
 
 header('Content-Type: application/json');
 
 $userId = isset($_SESSION['user_id']) ? (int)$_SESSION['user_id'] : null;
 $method = $_SERVER['REQUEST_METHOD'];
+$articleService = new ArticleService();
 
 function readJson(): array {
     $raw = file_get_contents('php://input');
     $data = json_decode($raw, true);
     return is_array($data) ? $data : [];
-}
-
-function slugify(string $text): string {
-    $text = strtolower(trim($text));
-    $text = preg_replace('~[^a-z0-9]+~', '-', $text);
-    $text = trim($text, '-');
-    return $text ?: 'story';
-}
-
-function uniqueSlug(PDO $conn, string $base, ?int $excludeId = null): string {
-    $slug = $base;
-    $i = 1;
-    while (true) {
-        $query = 'SELECT id FROM articles WHERE slug = ?' . ($excludeId ? ' AND id != ?' : '');
-        $stmt = $conn->prepare($query);
-        $params = [$slug];
-        if ($excludeId) {
-            $params[] = $excludeId;
-        }
-        $stmt->execute($params);
-        if (!$stmt->fetch()) {
-            return $slug;
-        }
-        $slug = $base . '-' . $i;
-        $i++;
-    }
-}
-
-function normalizeTags(string $tags): string {
-    $parts = array_filter(array_map('trim', explode(',', $tags)));
-    $parts = array_slice($parts, 0, 5);
-    return implode(', ', $parts);
-}
-
-function excerptFrom(?string $subtitle, ?string $body, int $limit = 240): string {
-    $src = $subtitle ?: $body ?: '';
-    $plain = trim(strip_tags($src));
-    if (strlen($plain) <= $limit) {
-        return $plain;
-    }
-    return rtrim(mb_substr($plain, 0, $limit), " \t\n\r\0\x0B") . '…';
-}
-
-function saveCover(?array $file, int $userId): ?string {
-    if (!$file || !isset($file['tmp_name']) || $file['error'] !== UPLOAD_ERR_OK) {
-        return null;
-    }
-
-    $allowed = ['image/jpeg' => 'jpg', 'image/png' => 'png', 'image/webp' => 'webp'];
-    if (!isset($allowed[$file['type']])) {
-        throw new RuntimeException('Invalid image type');
-    }
-
-    if ($file['size'] > 5 * 1024 * 1024) {
-        throw new RuntimeException('Image exceeds 5MB');
-    }
-
-    $ext = $allowed[$file['type']];
-    $dir = realpath(__DIR__ . '/../../public/images/articles');
-    if (!$dir) {
-        $dir = __DIR__ . '/../../public/images/articles';
-        if (!is_dir($dir)) {
-            mkdir($dir, 0755, true);
-        }
-    }
-
-    $name = 'article_' . $userId . '_' . time() . '_' . bin2hex(random_bytes(4)) . '.' . $ext;
-    $target = rtrim($dir, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . $name;
-
-    if (!move_uploaded_file($file['tmp_name'], $target)) {
-        throw new RuntimeException('Failed to save image');
-    }
-
-    // Stored relative to public/images/
-    return 'articles/' . $name;
 }
 
 try {
@@ -208,7 +135,7 @@ try {
         $title = isset($_POST['title']) ? trim($_POST['title']) : '';
         $subtitle = isset($_POST['subtitle']) ? trim($_POST['subtitle']) : '';
         $body = isset($_POST['body']) ? trim($_POST['body']) : '';
-        $tags = isset($_POST['tags']) ? normalizeTags($_POST['tags']) : '';
+        $tags = isset($_POST['tags']) ? $articleService->normalizeTags($_POST['tags']) : '';
         $visibility = isset($_POST['visibility']) ? $_POST['visibility'] : 'public';
 
         if (strlen($title) < 3) {
@@ -222,20 +149,20 @@ try {
             exit;
         }
 
-        $slugBase = slugify($title);
-        $slug = uniqueSlug($conn, $slugBase);
-        $excerpt = excerptFrom($subtitle, $body);
+        $slugBase = $articleService->generateSlug($title);
+        $slug = $articleService->generateUniqueSlug($slugBase);
+        $excerpt = $articleService->generateExcerpt($subtitle, $body);
         $isPublished = ($visibility === 'public') ? 1 : 0;
         $featuredImage = null;
 
-        try {
-            if (!empty($_FILES['cover'])) {
-                $featuredImage = saveCover($_FILES['cover'], $userId);
+        if (!empty($_FILES['cover'])) {
+            $imageResult = $articleService->saveArticleImage($_FILES['cover'], $userId);
+            if (!$imageResult['success']) {
+                http_response_code(422);
+                echo json_encode(['error' => $imageResult['error']]);
+                exit;
             }
-        } catch (RuntimeException $e) {
-            http_response_code(422);
-            echo json_encode(['error' => $e->getMessage()]);
-            exit;
+            $featuredImage = $imageResult['path'];
         }
 
         $stmt = $conn->prepare(
