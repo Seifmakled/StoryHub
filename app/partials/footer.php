@@ -59,5 +59,21 @@
     </div>
 </footer>
 
+<?php
+// Optional: third-party chatbot widget embed (site-wide)
+// Configure via app/config/chatbot_config.php
+try {
+    $chatCfgPath = __DIR__ . '/../config/chatbot_config.php';
+    if (is_file($chatCfgPath)) {
+        $chatCfg = require $chatCfgPath;
+        if (is_array($chatCfg) && !empty($chatCfg['enabled']) && !empty($chatCfg['embed_html'])) {
+            echo "\n" . $chatCfg['embed_html'] . "\n";
+        }
+    }
+} catch (Throwable $e) {
+    // Do not break page rendering if widget config is invalid.
+}
+?>
+
 </body>
 </html>

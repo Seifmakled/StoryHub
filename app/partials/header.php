@@ -28,6 +28,24 @@ if (!class_exists('Database')) {
     <!-- Global layout interactions (loader, nav helpers) -->
     <script src="/StoryHub/public/js/layout.js" defer></script>
 
+    <?php
+        // Gemini chatbot widget (loads site-wide when enabled)
+        $geminiCfgPath = __DIR__ . '/../config/gemini_chatbot_config.php';
+        $geminiEnabled = false;
+        try {
+            if (is_file($geminiCfgPath)) {
+                $geminiCfg = require $geminiCfgPath;
+                $geminiEnabled = is_array($geminiCfg) && !empty($geminiCfg['enabled']);
+            }
+        } catch (Throwable $e) {
+            $geminiEnabled = false;
+        }
+        if ($geminiEnabled):
+    ?>
+        <link rel="stylesheet" href="/StoryHub/public/css/chatbot.css">
+        <script src="/StoryHub/public/js/chatbot.js" defer></script>
+    <?php endif; ?>
+
     <script>
         // Base path for fetch() and asset URLs when hosted under a subfolder (e.g. /StoryHub/)
         window.APP_BASE = <?php

@@ -1,0 +1,119 @@
+/* Gemini Chatbot Widget */
+
+.chatbot-widget {
+  position: fixed;
+  right: 18px;
+  bottom: 18px;
+  z-index: 9999;
+  font-family: inherit;
+}
+
+.chatbot-toggle {
+  width: 54px;
+  height: 54px;
+  border-radius: 999px;
+  border: none;
+  cursor: pointer;
+  background: #6366f1;
+  color: #fff;
+  box-shadow: 0 10px 20px rgba(0,0,0,.12);
+}
+
+.chatbot-panel {
+  width: min(360px, calc(100vw - 36px));
+  height: 480px;
+  background: #fff;
+  border-radius: 16px;
+  box-shadow: 0 18px 40px rgba(0,0,0,.16);
+  overflow: hidden;
+  margin-bottom: 12px;
+  display: none;
+}
+
+.chatbot-panel.open { display: block; }
+
+.chatbot-header {
+  padding: 12px 14px;
+  border-bottom: 1px solid rgba(0,0,0,.06);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.chatbot-title {
+  font-weight: 700;
+  color: #111827;
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.chatbot-close {
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  font-size: 18px;
+  color: #6b7280;
+}
+
+.chatbot-messages {
+  padding: 12px;
+  height: 360px;
+  overflow: auto;
+  background: #fafafa;
+}
+
+.chatbot-msg {
+  max-width: 85%;
+  padding: 10px 12px;
+  border-radius: 14px;
+  margin: 8px 0;
+  line-height: 1.35;
+  font-size: 14px;
+  white-space: pre-wrap;
+}
+
+.chatbot-msg.user {
+  margin-left: auto;
+  background: #111827;
+  color: #fff;
+}
+
+.chatbot-msg.bot {
+  margin-right: auto;
+  background: #fff;
+  border: 1px solid rgba(0,0,0,.08);
+  color: #111827;
+}
+
+.chatbot-form {
+  display: flex;
+  gap: 8px;
+  padding: 10px;
+  border-top: 1px solid rgba(0,0,0,.06);
+  background: #fff;
+}
+
+.chatbot-input {
+  flex: 1;
+  border: 1px solid rgba(0,0,0,.12);
+  border-radius: 999px;
+  padding: 10px 12px;
+  outline: none;
+}
+
+.chatbot-send {
+  border: none;
+  border-radius: 999px;
+  padding: 10px 14px;
+  cursor: pointer;
+  background: #6366f1;
+  color: #fff;
+  font-weight: 600;
+}
+
+.chatbot-hint {
+  padding: 0 12px 12px;
+  color: #6b7280;
+  font-size: 12px;
+}
