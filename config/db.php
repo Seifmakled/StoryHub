@@ -1,25 +1,52 @@
 <?php
 class Database {
     // Adjust these for your local setup
-    private static $host = 'localhost';
-    private static $user = 'root';
-    private static $pass = '';
-    private static $dbname = 'blog_project';
+    private static $host;
+    private static $user;
+    private static $pass;
+    private static $dbname;
 
     private static $conn = null;
     private static $bootstrapped = false;
 
     public function __construct() {
         if (!self::$bootstrapped) {
+            self::loadEnv();
             self::bootstrap();
         }
     }
 
     public static function getConnection() {
         if (!self::$bootstrapped) {
+            self::loadEnv();
             self::bootstrap();
         }
         return self::$conn;
+    }
+
+    private static function loadEnv(): void {
+        // Prefer environment variables (e.g., Railway) with local fallbacks for XAMPP
+        self::$host = getenv('DB_HOST') ?: 'localhost';
+        self::$user = getenv('DB_USER') ?: 'root';
+        self::$pass = getenv('DB_PASS') ?: '';
+        self::$dbname = getenv('DB_NAME') ?: 'blog_project';
+
+        // If Railway provides a single DATABASE_URL, parse it
+        $databaseUrl = getenv('DATABASE_URL');
+        if ($databaseUrl) {
+            $parts = parse_url($databaseUrl);
+            if ($parts !== false) {
+                self::$host = $parts['host'] ?? self::$host;
+                self::$user = $parts['user'] ?? self::$user;
+                self::$pass = $parts['pass'] ?? self::$pass;
+                if (isset($parts['path'])) {
+                    $db = ltrim($parts['path'], '/');
+                    if ($db !== '') {
+                        self::$dbname = $db;
+                    }
+                }
+            }
+        }
     }
 
     private static function bootstrap(): void {
