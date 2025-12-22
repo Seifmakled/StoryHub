@@ -53,38 +53,6 @@ include __DIR__ . '/../partials/navbar.php';
     </div>
 </section>
 
-<!-- Categories Section -->
-<section class="categories-section">
-    <div class="container">
-        <div class="section-header">
-            <h2>Explore by Category</h2>
-        </div>
-        
-        <div class="categories-grid">
-            <?php
-            $categories = [
-                ['name' => 'Technology', 'icon' => 'fa-laptop-code', 'color' => '#3b82f6'],
-                ['name' => 'Design', 'icon' => 'fa-palette', 'color' => '#ec4899'],
-                ['name' => 'Business', 'icon' => 'fa-briefcase', 'color' => '#f59e0b'],
-                ['name' => 'Health', 'icon' => 'fa-heartbeat', 'color' => '#10b981'],
-                ['name' => 'Travel', 'icon' => 'fa-plane', 'color' => '#8b5cf6'],
-                ['name' => 'Food', 'icon' => 'fa-utensils', 'color' => '#ef4444'],
-                ['name' => 'Lifestyle', 'icon' => 'fa-coffee', 'color' => '#06b6d4'],
-                ['name' => 'Entertainment', 'icon' => 'fa-film', 'color' => '#f97316']
-            ];
-            
-            foreach ($categories as $category):
-            ?>
-            <a href="/StoryHub/index.php?url=explore&category=<?php echo strtolower($category['name']); ?>" class="category-card" style="--category-color: <?php echo $category['color']; ?>">
-                <i class="fas <?php echo $category['icon']; ?> category-icon"></i>
-                <h4><?php echo $category['name']; ?></h4>
-                <span class="article-count">125+ articles</span>
-            </a>
-            <?php endforeach; ?>
-        </div>
-    </div>
-</section>
-
 <!-- CTA Section -->
 <section class="cta-section">
     <div class="container">
