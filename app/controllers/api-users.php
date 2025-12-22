@@ -6,11 +6,7 @@ if (session_status() === PHP_SESSION_NONE) {
 	session_start();
 }
 
-if (!isset($conn)) {
-	require_once __DIR__ . '/../../config/db.php';
-	$database = new Database();
-	$conn = $database->getConnection();
-}
+require_once __DIR__ . '/../repositories/UserRepository.php';
 
 header('Content-Type: application/json');
 
@@ -32,57 +28,42 @@ function readJsonBody() {
 }
 
 try {
+	$userRepository = new UserRepository();
+	
 	if ($method === 'GET') {
 		// Public profile fetch: index.php?url=api-users&id=123
 		$id = isset($_GET['id']) ? (int)$_GET['id'] : 0;
 		if ($id > 0) {
-			// Basic user info
-			$stmt = $conn->prepare('SELECT id, username, full_name, bio, profile_image, created_at FROM users WHERE id = ?');
-			$stmt->execute([$id]);
-			$user = $stmt->fetch();
+			// Basic user info - Using Repository
+			$user = $userRepository->findById($id, ['id', 'username', 'full_name', 'bio', 'profile_image', 'created_at']);
 			if (!$user) {
 				http_response_code(404);
 				echo json_encode(['error' => 'User not found']);
 				exit;
 			}
 
+			// Statistics - Using Repository
 			$stats = [
-				'articles' => 0,
-				'followers' => 0,
-				'following' => 0,
-				'likes' => 0,
+				'articles' => $userRepository->countUserArticles($id, true),
+				'followers' => $userRepository->countFollowers($id),
+				'following' => $userRepository->countFollowing($id),
+				'likes' => $userRepository->countTotalLikesReceived($id),
 			];
 
-			// Articles count (published only for public profile)
-			$stmt = $conn->prepare('SELECT COUNT(*) AS c FROM articles WHERE user_id = ? AND is_published = 1');
-			$stmt->execute([$id]);
-			$stats['articles'] = (int)$stmt->fetch()['c'];
-
-			// Followers count (follows schema: follower_id -> followee_id)
-			$stmt = $conn->prepare('SELECT COUNT(*) AS c FROM follows WHERE followee_id = ?');
-			$stmt->execute([$id]);
-			$stats['followers'] = (int)$stmt->fetch()['c'];
-
-			// Following count
-			$stmt = $conn->prepare('SELECT COUNT(*) AS c FROM follows WHERE follower_id = ?');
-			$stmt->execute([$id]);
-			$stats['following'] = (int)$stmt->fetch()['c'];
-
-			// Likes received across this user's articles
-			$stmt = $conn->prepare('SELECT COUNT(*) AS c FROM likes l JOIN articles a ON a.id = l.article_id WHERE a.user_id = ?');
-			$stmt->execute([$id]);
-			$stats['likes'] = (int)$stmt->fetch()['c'];
-
-			// Viewer context (optional)
+			// Viewer context (optional) - Still need direct query for follows check
 			$viewerId = isset($_SESSION['user_id']) ? (int)$_SESSION['user_id'] : 0;
 			$isFollowing = false;
 			if ($viewerId > 0 && $viewerId !== $id) {
+				require_once __DIR__ . '/../../config/db.php';
+				$conn = Database::getInstance()->getConnection();
 				$stmt = $conn->prepare('SELECT 1 FROM follows WHERE follower_id = ? AND followee_id = ? LIMIT 1');
 				$stmt->execute([$viewerId, $id]);
 				$isFollowing = (bool)$stmt->fetchColumn();
 			}
 
-			// Recent published articles for the profile
+			// Recent published articles for the profile - Still need direct query (articles table)
+			require_once __DIR__ . '/../../config/db.php';
+			$conn = Database::getInstance()->getConnection();
 			$stmt = $conn->prepare(
 				'SELECT a.id, a.title, a.slug, a.excerpt, a.featured_image, a.views, a.created_at,
 						(SELECT COUNT(*) FROM likes l WHERE l.article_id = a.id) AS likes_count,
@@ -104,29 +85,9 @@ try {
 			exit;
 		}
 
-		// List users (try to get common fields, handle different table structures)
+		// List users - Using Repository
 		try {
-			// First, get table structure to see what columns exist
-			$stmt = $conn->query("DESCRIBE users");
-			$columns = $stmt->fetchAll(PDO::FETCH_COLUMN);
-			
-			// Build SELECT query based on available columns
-			$selectFields = [];
-			$commonFields = ['id', 'username', 'email', 'created_at', 'is_admin', 'full_name', 'name', 'user_name'];
-			
-			foreach ($commonFields as $field) {
-				if (in_array($field, $columns)) {
-					$selectFields[] = $field;
-				}
-			}
-			
-			if (empty($selectFields)) {
-				$selectFields = ['*']; // fallback to all columns
-			}
-			
-			$query = 'SELECT ' . implode(', ', $selectFields) . ' FROM users ORDER BY id DESC LIMIT 100';
-			$stmt = $conn->query($query);
-			$users = $stmt->fetchAll();
+			$users = $userRepository->listAll(100);
 			echo json_encode(['data' => $users]);
 		} catch (PDOException $e) {
 			http_response_code(500);
@@ -155,51 +116,15 @@ try {
 
 		$hash = password_hash($password, PASSWORD_BCRYPT);
 		try {
-			// Check what columns exist in the users table
-			$stmt = $conn->query("DESCRIBE users");
-			$columns = $stmt->fetchAll(PDO::FETCH_COLUMN);
-			
-			// Build INSERT query based on available columns
-			$insertFields = [];
-			$insertValues = [];
-			
-			// Try common field names
-			if (in_array('username', $columns)) {
-				$insertFields[] = 'username';
-				$insertValues[] = $username;
-			} elseif (in_array('user_name', $columns)) {
-				$insertFields[] = 'user_name';
-				$insertValues[] = $username;
-			} elseif (in_array('name', $columns)) {
-				$insertFields[] = 'name';
-				$insertValues[] = $username;
-			}
-			
-			if (in_array('email', $columns)) {
-				$insertFields[] = 'email';
-				$insertValues[] = $email;
-			}
-			
-			if (in_array('password', $columns)) {
-				$insertFields[] = 'password';
-				$insertValues[] = $hash;
-			}
-			
-			if (in_array('is_admin', $columns)) {
-				$insertFields[] = 'is_admin';
-				$insertValues[] = 0;
-			}
-			
-			if (empty($insertFields)) {
-				http_response_code(500);
-				echo json_encode(['error' => 'No compatible fields found in users table']);
-				exit;
-			}
-			
-			$placeholders = str_repeat('?,', count($insertValues) - 1) . '?';
-			$query = 'INSERT INTO users (' . implode(', ', $insertFields) . ') VALUES (' . $placeholders . ')';
-			$stmt = $conn->prepare($query);
-			$stmt->execute($insertValues);
+			// Create user - Using Repository
+			$id = $userRepository->createUser([
+				'username' => $username,
+				'email' => $email,
+				'password' => $hash,
+				'is_admin' => 0
+			]);
+			echo json_encode(['message' => 'User created', 'id' => $id]);
+			exit;
 		} catch (PDOException $e) {
 			$code = $e->getCode();
 			if ($code === '23000') { // integrity constraint violation (e.g., duplicate)
@@ -209,10 +134,6 @@ try {
 			}
 			throw $e;
 		}
-		$id = (int)$conn->lastInsertId();
-
-		echo json_encode(['message' => 'User created', 'id' => $id]);
-		exit;
 	}
 
 	if ($method === 'DELETE') {
@@ -223,8 +144,8 @@ try {
 			exit;
 		}
 
-		$stmt = $conn->prepare('DELETE FROM users WHERE id = ?');
-		$stmt->execute([$id]);
+		// Delete user - Using Repository
+		$userRepository->delete($id);
 		echo json_encode(['message' => 'User deleted']);
 		exit;
 	}

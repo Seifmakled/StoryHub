@@ -2,9 +2,8 @@
 session_start();
 require_once __DIR__ . '/config/db.php';
 
-// Initialize database connection
-$database = new Database();
-$conn = $database->getConnection();
+// Initialize database connection (Singleton pattern)
+$conn = Database::getInstance()->getConnection();
 
 // Get the requested page from URL
 $page = isset($_GET['url']) ? $_GET['url'] : 'landing';

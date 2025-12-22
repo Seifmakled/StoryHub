@@ -2,9 +2,8 @@
 
 session_start();
 
-require_once __DIR__ . '/../../config/db.php';
+require_once __DIR__ . '/../repositories/UserRepository.php';
 
-$db = Database::getConnection(); 
 $error = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -29,34 +28,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (empty($error)) {
         
         try {
-            // 4. SECURITY CHECK: Check for Existing User (Email OR Username)
-            $checkStmt = $db->prepare("SELECT COUNT(*) FROM users WHERE email = :email OR username = :username");
-            $checkStmt->execute([':email' => $email, ':username' => $username]);
-            $count = $checkStmt->fetchColumn();
-
-            if ($count > 0) {
-                $checkEmail = $db->prepare("SELECT COUNT(*) FROM users WHERE email = :email");
-                $checkEmail->execute([':email' => $email]);
-                $error = ($checkEmail->fetchColumn() > 0) ? "email_exists" : "username_exists";
+            // 4. SECURITY CHECK: Check for Existing User (Email OR Username) - Using Repository
+            $userRepository = new UserRepository();
+            
+            if ($userRepository->emailExists($email) || $userRepository->usernameExists($username)) {
+                $error = $userRepository->emailExists($email) ? "email_exists" : "username_exists";
             } else {
                 
-                // 5. SECURITY: HASH PASSWORD AND INSERT USER
+                // 5. SECURITY: HASH PASSWORD AND INSERT USER - Using Repository
                 $hashed_password = password_hash($password, PASSWORD_DEFAULT);
                 
-                $insertStmt = $db->prepare("
-                    INSERT INTO users (username, email, password, full_name, is_verified) 
-                    VALUES (:username, :email, :password_hash, :full_name, :is_verified)
-                ");
-                
-                $result = $insertStmt->execute([
-                    ':username' => $username,
-                    ':email'    => $email,
-                    ':password_hash' => $hashed_password,
-                    ':full_name'=> $full_name,
-                    ':is_verified' => $is_verified,
+                $userId = $userRepository->createUser([
+                    'username' => $username,
+                    'email' => $email,
+                    'password' => $hashed_password,
+                    'full_name' => $full_name,
+                    'is_verified' => $is_verified
                 ]);
 
-                if ($result) {
+                if ($userId) {
                     // 6. SUCCESS: START SESSION AND REDIRECT
                     $_SESSION['user_email'] = $email;
                     header("Location: ../views/verify.php"); 

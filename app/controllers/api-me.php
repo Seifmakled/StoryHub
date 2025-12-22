@@ -6,11 +6,7 @@ if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
-if (!isset($conn)) {
-    require_once __DIR__ . '/../../config/db.php';
-    $database = new Database();
-    $conn = $database->getConnection();
-}
+require_once __DIR__ . '/../repositories/UserRepository.php';
 
 header('Content-Type: application/json');
 
@@ -32,14 +28,14 @@ function readJsonBodyAssoc(): array {
 }
 
 try {
+    $userRepository = new UserRepository();
+    
     if ($method === 'GET') {
         $section = isset($_GET['section']) ? $_GET['section'] : 'overview';
 
         if ($section === 'overview') {
-            // user details
-            $stmt = $conn->prepare('SELECT id, username, email, full_name, bio, profile_image, created_at FROM users WHERE id = ?');
-            $stmt->execute([$userId]);
-            $user = $stmt->fetch();
+            // user details - Using Repository
+            $user = $userRepository->findById($userId, ['id', 'username', 'email', 'full_name', 'bio', 'profile_image', 'created_at']);
 
             if (!$user) {
                 http_response_code(404);
@@ -47,20 +43,19 @@ try {
                 exit;
             }
 
-            // counts
+            // counts - Using Repository for user-related stats
             $counts = [
-                'articles' => 0,
-                'followers' => 0,
-                'following' => 0,
+                'articles' => $userRepository->countUserArticles($userId),
+                'followers' => $userRepository->countFollowers($userId),
+                'following' => $userRepository->countFollowing($userId),
                 'likes' => 0,
                 'saved' => 0,
                 'comments' => 0,
             ];
 
-            $counts['articles'] = (int)$conn->query("SELECT COUNT(*) AS c FROM articles WHERE user_id = $userId")->fetch()['c'];
-            // follows schema: follower_id -> followee_id
-            $counts['followers'] = (int)$conn->query("SELECT COUNT(*) AS c FROM follows WHERE followee_id = $userId")->fetch()['c'];
-            $counts['following'] = (int)$conn->query("SELECT COUNT(*) AS c FROM follows WHERE follower_id = $userId")->fetch()['c'];
+            // Still need direct queries for likes, saved, comments (not user table)
+            require_once __DIR__ . '/../../config/db.php';
+            $conn = Database::getInstance()->getConnection();
             $counts['likes'] = (int)$conn->query("SELECT COUNT(*) AS c FROM likes WHERE user_id = $userId")->fetch()['c'];
             // bookmarks table is our saved
             $counts['saved'] = (int)$conn->query("SELECT COUNT(*) AS c FROM bookmarks WHERE user_id = $userId")->fetch()['c'];
@@ -70,6 +65,10 @@ try {
             exit;
         }
 
+        // Articles, saved, liked, comments sections - Still need direct queries (not user table)
+        require_once __DIR__ . '/../../config/db.php';
+        $conn = Database::getInstance()->getConnection();
+        
         if ($section === 'articles') {
             $stmt = $conn->prepare(
                 'SELECT a.id, a.title, a.slug, a.excerpt, a.featured_image, a.views, a.is_published, a.created_at,
@@ -132,16 +131,13 @@ try {
     if ($method === 'POST') {
         // Update profile details: full_name, bio, email
         $data = readJsonBodyAssoc();
-        $fields = [];
-        $values = [];
+        $updateData = [];
 
         if (isset($data['full_name'])) {
-            $fields[] = 'full_name = ?';
-            $values[] = trim((string)$data['full_name']);
+            $updateData['full_name'] = trim((string)$data['full_name']);
         }
         if (isset($data['bio'])) {
-            $fields[] = 'bio = ?';
-            $values[] = trim((string)$data['bio']);
+            $updateData['bio'] = trim((string)$data['bio']);
         }
         if (isset($data['email'])) {
             $email = trim((string)$data['email']);
@@ -150,28 +146,23 @@ try {
                 echo json_encode(['error' => 'Invalid email address']);
                 exit;
             }
-            // ensure not used by another user
-            $stmt = $conn->prepare('SELECT id FROM users WHERE email = ? AND id <> ? LIMIT 1');
-            $stmt->execute([$email, $userId]);
-            if ($stmt->fetch()) {
+            // ensure not used by another user - Using Repository
+            if ($userRepository->emailExists($email, $userId)) {
                 http_response_code(409);
                 echo json_encode(['error' => 'Email already in use']);
                 exit;
             }
-            $fields[] = 'email = ?';
-            $values[] = $email;
+            $updateData['email'] = $email;
         }
 
-        if (empty($fields)) {
+        if (empty($updateData)) {
             http_response_code(400);
             echo json_encode(['error' => 'No updatable fields provided']);
             exit;
         }
 
-        $values[] = $userId;
-        $sql = 'UPDATE users SET ' . implode(', ', $fields) . ' WHERE id = ?';
-        $stmt = $conn->prepare($sql);
-        $stmt->execute($values);
+        // Update profile - Using Repository
+        $userRepository->updateProfile($userId, $updateData);
 
         echo json_encode(['message' => 'Profile updated']);
         exit;

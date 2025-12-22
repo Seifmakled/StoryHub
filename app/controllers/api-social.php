@@ -6,14 +6,16 @@ if (session_status() === PHP_SESSION_NONE) {
 
 if (!isset($conn)) {
     require_once __DIR__ . '/../../config/db.php';
-    $database = new Database();
-    $conn = $database->getConnection();
+    $conn = Database::getInstance()->getConnection();
 }
+
+require_once __DIR__ . '/../services/NotificationService.php';
 
 header('Content-Type: application/json');
 
 $userId = isset($_SESSION['user_id']) ? (int)$_SESSION['user_id'] : null;
 $method = $_SERVER['REQUEST_METHOD'];
+$notificationService = new NotificationService();
 
 function requireAuth(?int $userId): void {
     if (!$userId) {
@@ -21,13 +23,6 @@ function requireAuth(?int $userId): void {
         echo json_encode(['error' => 'Unauthorized']);
         exit;
     }
-}
-
-function notify(PDO $conn, int $recipientId, ?int $actorId, string $type, ?int $entityId, string $message): void {
-    // Do not notify self
-    if ($actorId && $actorId === $recipientId) return;
-    $stmt = $conn->prepare('INSERT INTO notifications (user_id, actor_id, type, entity_id, message) VALUES (?, ?, ?, ?, ?)');
-    $stmt->execute([$recipientId, $actorId, $type, $entityId, $message]);
 }
 
 try {
@@ -98,7 +93,7 @@ try {
                 exit;
             }
             $conn->prepare('INSERT INTO likes (user_id, article_id) VALUES (?, ?)')->execute([$userId, $articleId]);
-            notify($conn, (int)$article['user_id'], $userId, 'like', $articleId, 'liked your story');
+            $notificationService->createNotification((int)$article['user_id'], $userId, 'like', $articleId, 'liked your story');
             echo json_encode(['status' => 'liked']);
             exit;
         }
@@ -119,7 +114,7 @@ try {
                 exit;
             }
             $conn->prepare('INSERT INTO bookmarks (user_id, article_id) VALUES (?, ?)')->execute([$userId, $articleId]);
-            notify($conn, (int)$article['user_id'], $userId, 'save', $articleId, 'saved your story');
+            $notificationService->createNotification((int)$article['user_id'], $userId, 'save', $articleId, 'saved your story');
             echo json_encode(['status' => 'saved']);
             exit;
         }
@@ -137,7 +132,7 @@ try {
             $stmt->execute([$userId, $articleId, $content]);
             $commentId = (int)$conn->lastInsertId();
 
-            notify($conn, (int)$article['user_id'], $userId, 'comment', $articleId, 'commented on your story');
+            $notificationService->createNotification((int)$article['user_id'], $userId, 'comment', $articleId, 'commented on your story');
 
             $stmt = $conn->prepare('SELECT c.id, c.content, c.created_at, c.user_id, u.username, u.full_name, u.profile_image FROM comments c JOIN users u ON u.id = c.user_id WHERE c.id = ?');
             $stmt->execute([$commentId]);
@@ -161,7 +156,7 @@ try {
                 exit;
             }
             $conn->prepare('INSERT INTO follows (follower_id, followee_id) VALUES (?, ?)')->execute([$userId, $targetId]);
-            notify($conn, $targetId, $userId, 'follow', null, 'started following you');
+            $notificationService->createNotification($targetId, $userId, 'follow', null, 'started following you');
             echo json_encode(['status' => 'followed']);
             exit;
         }
