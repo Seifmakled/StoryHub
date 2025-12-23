@@ -215,4 +215,179 @@ document.addEventListener('DOMContentLoaded', function() {
             console.error(err);
         }
     })();
+
+    // Hero 3D Model (StoryHub.obj)
+    (async function initHeroModel() {
+        const canvas = document.getElementById('storyhubModelCanvas');
+        if (!canvas) return;
+
+        const fallback = document.getElementById('storyhubModelFallback');
+        const showFallback = (message) => {
+            if (!fallback) return;
+            fallback.textContent = message || '3D preview unavailable.';
+            fallback.hidden = false;
+        };
+
+        const container = canvas.closest('.hero-model') || canvas.parentElement;
+        if (!container) {
+            showFallback('3D preview unavailable.');
+            return;
+        }
+
+        const modelUrl = `${base}public/models/StoryHub.obj`;
+
+        const hasWebGL = () => {
+            try {
+                const testCanvas = document.createElement('canvas');
+                return !!(window.WebGLRenderingContext && (testCanvas.getContext('webgl') || testCanvas.getContext('experimental-webgl')));
+            } catch (_) {
+                return false;
+            }
+        };
+
+        if (!hasWebGL()) {
+            showFallback('3D preview unavailable (WebGL not supported).');
+            return;
+        }
+
+        let renderer;
+        let camera;
+        let scene;
+        let model;
+        let animationId;
+
+        const setRendererSize = () => {
+            const width = Math.max(1, container.clientWidth);
+            const height = Math.max(1, container.clientHeight);
+            if (renderer) renderer.setSize(width, height, false);
+            if (camera) {
+                camera.aspect = width / height;
+                camera.updateProjectionMatrix();
+            }
+        };
+
+        try {
+            let THREE;
+            let OBJLoader;
+            try {
+                // Prefer local files via import map (works offline / when CDN is blocked)
+                THREE = await import('three');
+                ({ OBJLoader } = await import('three/addons/loaders/OBJLoader.js'));
+            } catch (localErr) {
+                console.error('Local Three.js import failed:', localErr);
+                try {
+                    // Fallback to CDN
+                    THREE = await import('https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js');
+                    ({ OBJLoader } = await import('https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/loaders/OBJLoader.js'));
+                } catch (cdnErr) {
+                    console.error('CDN Three.js import failed:', cdnErr);
+                    showFallback('3D preview unavailable (failed to load 3D engine).');
+                    return;
+                }
+            }
+
+            scene = new THREE.Scene();
+
+            renderer = new THREE.WebGLRenderer({
+                canvas,
+                antialias: true,
+                alpha: true,
+                powerPreference: 'high-performance'
+            });
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+
+            camera = new THREE.PerspectiveCamera(45, 1, 0.1, 1000);
+            camera.position.set(0, 0.9, 3.2);
+
+            const ambient = new THREE.AmbientLight(0xffffff, 0.85);
+            scene.add(ambient);
+
+            const keyLight = new THREE.DirectionalLight(0xffffff, 0.9);
+            keyLight.position.set(2.5, 4, 2);
+            scene.add(keyLight);
+
+            const fillLight = new THREE.DirectionalLight(0xffffff, 0.35);
+            fillLight.position.set(-2.5, 1, 2);
+            scene.add(fillLight);
+
+            setRendererSize();
+
+            const loader = new OBJLoader();
+            loader.load(
+                modelUrl,
+                (obj) => {
+                    model = obj;
+
+                    // Center + scale to a consistent size
+                    const box = new THREE.Box3().setFromObject(model);
+                    const size = box.getSize(new THREE.Vector3());
+                    const center = box.getCenter(new THREE.Vector3());
+
+                    model.position.x -= center.x;
+                    model.position.y -= center.y;
+                    model.position.z -= center.z;
+
+                    const maxDim = Math.max(size.x, size.y, size.z) || 1;
+                    const scale = 1.8 / maxDim;
+                    model.scale.setScalar(scale);
+
+                    // Slight tilt so it reads better in the hero
+                    model.rotation.x = -0.08;
+                    model.rotation.y = 0.35;
+
+                    // If materials are missing, make it visible with a neutral material
+                    model.traverse((child) => {
+                        if (!child || !child.isMesh) return;
+                        if (!child.material) {
+                            child.material = new THREE.MeshStandardMaterial({ color: 0xffffff, metalness: 0.1, roughness: 0.8 });
+                        }
+                        child.castShadow = false;
+                        child.receiveShadow = false;
+                    });
+
+                    scene.add(model);
+                },
+                undefined,
+                async (e) => {
+                    console.error('OBJ load failed:', e);
+                    try {
+                        const res = await fetch(modelUrl, { method: 'HEAD', cache: 'no-store' });
+                        if (!res.ok) {
+                            showFallback(`3D preview unavailable (model not found: ${res.status}).`);
+                            return;
+                        }
+                    } catch (headErr) {
+                        console.error('OBJ HEAD check failed:', headErr);
+                    }
+                    showFallback('3D preview unavailable (failed to load model).');
+                }
+            );
+
+            const animate = () => {
+                animationId = window.requestAnimationFrame(animate);
+                if (model) model.rotation.y += 0.003;
+                renderer.render(scene, camera);
+            };
+            animate();
+
+            if ('ResizeObserver' in window) {
+                const ro = new ResizeObserver(() => setRendererSize());
+                ro.observe(container);
+            } else {
+                window.addEventListener('resize', setRendererSize);
+            }
+
+            window.addEventListener('beforeunload', () => {
+                if (animationId) window.cancelAnimationFrame(animationId);
+                try {
+                    renderer?.dispose?.();
+                } catch (_) {
+                    // ignore
+                }
+            });
+        } catch (err) {
+            console.error('3D init failed:', err);
+            showFallback('3D preview unavailable (initialization error).');
+        }
+    })();
 });

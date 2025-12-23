@@ -70,7 +70,19 @@ if (!class_exists('Database')) {
         $jsPath = __DIR__ . '/../../public/js/' . $pageJS;
         $jsVer = is_file($jsPath) ? (string)filemtime($jsPath) : '1';
     ?>
-    <script src="/StoryHub/public/js/<?php echo $pageJS; ?>?v=<?php echo urlencode($jsVer); ?>" defer></script>
+    <?php if ($pageJS === 'landing.js'): ?>
+        <script type="importmap">
+            {
+                "imports": {
+                    "three": "/StoryHub/public/vendor/three/three.module.js",
+                    "three/addons/": "/StoryHub/public/vendor/three/examples/jsm/"
+                }
+            }
+        </script>
+        <script type="module" src="/StoryHub/public/js/<?php echo $pageJS; ?>?v=<?php echo urlencode($jsVer); ?>"></script>
+    <?php else: ?>
+        <script src="/StoryHub/public/js/<?php echo $pageJS; ?>?v=<?php echo urlencode($jsVer); ?>" defer></script>
+    <?php endif; ?>
 <?php endif; ?>
 </head>
 <body>
