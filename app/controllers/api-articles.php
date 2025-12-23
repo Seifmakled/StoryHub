@@ -136,24 +136,47 @@ try {
         $subtitle = isset($_POST['subtitle']) ? trim($_POST['subtitle']) : '';
         $body = isset($_POST['body']) ? trim($_POST['body']) : '';
         $tags = isset($_POST['tags']) ? $articleService->normalizeTags($_POST['tags']) : '';
-        $visibility = isset($_POST['visibility']) ? $_POST['visibility'] : 'public';
+        $visibility = isset($_POST['visibility']) ? $_POST['visibility'] : 'public'; // public|private|draft
+        $articleId = isset($_POST['id']) ? (int)$_POST['id'] : null;
 
         if (strlen($title) < 3) {
             http_response_code(422);
             echo json_encode(['error' => 'Title is required']);
             exit;
         }
-        if (strlen($body) < 20) {
+
+        $isDraft = ($visibility === 'draft');
+        $isPublished = ($visibility === 'public') ? 1 : 0;
+
+        if (!$isDraft && strlen($body) < 20) {
             http_response_code(422);
             echo json_encode(['error' => 'Body is too short']);
             exit;
         }
 
-        $slugBase = $articleService->generateSlug($title);
-        $slug = $articleService->generateUniqueSlug($slugBase);
-        $excerpt = $articleService->generateExcerpt($subtitle, $body);
-        $isPublished = ($visibility === 'public') ? 1 : 0;
+        $existing = null;
+        $slug = null;
         $featuredImage = null;
+
+        if ($articleId) {
+            $stmt = $conn->prepare('SELECT id, user_id, slug, featured_image FROM articles WHERE id = ? AND user_id = ? LIMIT 1');
+            $stmt->execute([$articleId, $userId]);
+            $existing = $stmt->fetch();
+            if (!$existing) {
+                http_response_code(404);
+                echo json_encode(['error' => 'Article not found']);
+                exit;
+            }
+            $slug = $existing['slug'];
+            $featuredImage = $existing['featured_image'];
+        }
+
+        if (!$slug) {
+            $slugBase = $articleService->generateSlug($title);
+            $slug = $articleService->generateUniqueSlug($slugBase);
+        }
+
+        $excerpt = $articleService->generateExcerpt($subtitle, $body);
 
         if (!empty($_FILES['cover'])) {
             $imageResult = $articleService->saveArticleImage($_FILES['cover'], $userId);
@@ -163,6 +186,42 @@ try {
                 exit;
             }
             $featuredImage = $imageResult['path'];
+        }
+
+        if ($articleId) {
+            $stmt = $conn->prepare(
+                'UPDATE articles
+                 SET title = :title, content = :content, excerpt = :excerpt, featured_image = :featured_image,
+                     tags = :tags, is_published = :is_published, updated_at = NOW()
+                 WHERE id = :id AND user_id = :user_id'
+            );
+
+            $stmt->execute([
+                ':title' => $title,
+                ':content' => $body,
+                ':excerpt' => $excerpt,
+                ':featured_image' => $featuredImage,
+                ':tags' => $tags,
+                ':is_published' => $isPublished,
+                ':id' => $articleId,
+                ':user_id' => $userId
+            ]);
+
+            http_response_code(200);
+            echo json_encode([
+                'message' => $isDraft ? 'Draft updated' : ($isPublished ? 'Published' : 'Saved privately'),
+                'data' => [
+                    'id' => $articleId,
+                    'slug' => $slug,
+                    'title' => $title,
+                    'excerpt' => $excerpt,
+                    'featured_image' => $featuredImage,
+                    'tags' => $tags,
+                    'is_published' => $isPublished,
+                    'visibility' => $visibility
+                ]
+            ]);
+            exit;
         }
 
         $stmt = $conn->prepare(
@@ -185,7 +244,7 @@ try {
         $id = (int)$conn->lastInsertId();
         http_response_code(201);
         echo json_encode([
-            'message' => $isPublished ? 'Published' : 'Draft saved',
+            'message' => $isDraft ? 'Draft saved' : ($isPublished ? 'Published' : 'Saved privately'),
             'data' => [
                 'id' => $id,
                 'slug' => $slug,
@@ -193,7 +252,8 @@ try {
                 'excerpt' => $excerpt,
                 'featured_image' => $featuredImage,
                 'tags' => $tags,
-                'is_published' => $isPublished
+                'is_published' => $isPublished,
+                'visibility' => $visibility
             ]
         ]);
         exit;

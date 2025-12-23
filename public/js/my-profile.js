@@ -21,9 +21,15 @@
 
     const containers = {
         articles: qs('#myArticlesContainer'),
+        drafts: qs('#draftsContainer'),
         saved: qs('#savedContainer'),
         liked: qs('#likedContainer'),
         comments: qs('#commentsContainer')
+    };
+
+    const counts = {
+        articles: qs('#countArticles'),
+        drafts: qs('#countDrafts')
     };
 
     async function fetchJSON(url, opts) {
@@ -63,9 +69,16 @@
         window.location.href = `${base}index.php?url=article&slug=${encodeURIComponent(slug)}`;
     }
 
+    function goToDraftEdit(id) {
+        if (!id) return;
+        window.location.href = `${base}index.php?url=write&edit=${encodeURIComponent(id)}`;
+    }
+
         function articleCard(a, owned=true) {
-        const img = a.featured_image ? a.featured_image : 'article-placeholder.jpg';
-        const actions = owned ? `
+                const img = a.featured_image ? a.featured_image : 'article-placeholder.jpg';
+                const isDraft = (a.is_published === 0 || a.is_published === '0');
+                const statusBadge = isDraft ? '<span class="status-badge draft">Draft</span>' : '';
+                const actions = owned ? `
             <div class="article-menu">
               <button class="btn-menu"><i class="fas fa-ellipsis-v"></i></button>
               <div class="menu-dropdown">
@@ -74,11 +87,12 @@
               </div>
             </div>` : '';
         return `
-                <article class="article-card" data-id="${a.id}" data-slug="${a.slug ? String(a.slug).replace(/"/g, '&quot;') : ''}" role="link" tabindex="0">
-          <div class="article-image">
-            <img src="public/images/${img}" alt="Article">
-            ${actions}
-          </div>
+                                <article class="article-card" data-id="${a.id}" data-slug="${a.slug ? String(a.slug).replace(/"/g, '&quot;') : ''}" data-published="${isDraft ? '0' : '1'}" role="link" tabindex="0">
+                    <div class="article-image">
+                        <img src="public/images/${img}" alt="Article">
+                        ${statusBadge}
+                        ${actions}
+                    </div>
           <div class="article-content">
             <span class="article-category">${a.category || ''}</span>
             <h3>${a.title || ''}</h3>
@@ -129,6 +143,13 @@
     async function loadArticles() {
         const data = await fetchJSON(base + 'index.php?url=api-me&section=articles');
         containers.articles.innerHTML = data.data.map(a => articleCard(a, true)).join('') || '<p class="empty-state"><i class="fas fa-newspaper"></i> <span>No articles yet</span></p>';
+        if (counts.articles) counts.articles.textContent = data.data.length;
+    }
+
+    async function loadDrafts() {
+        const data = await fetchJSON(base + 'index.php?url=api-me&section=drafts');
+        containers.drafts.innerHTML = data.data.map(a => articleCard(a, true)).join('') || '<p class="empty-state"><i class="fas fa-file-alt"></i> <span>No drafts yet</span></p>';
+        if (counts.drafts) counts.drafts.textContent = data.data.length;
     }
     async function loadSaved() {
         const data = await fetchJSON(base + 'index.php?url=api-me&section=saved');
@@ -154,6 +175,23 @@
             if (!card) return;
             const slug = card.getAttribute('data-slug');
             if (slug) goToArticle(slug);
+        });
+
+        // Drafts grid
+        containers.drafts.addEventListener('click', (e) => {
+            if (e.target.closest('.article-menu') || e.target.closest('.btn-menu') || e.target.closest('.menu-dropdown') || e.target.closest('[data-action="delete"]')) {
+                return;
+            }
+            const card = e.target.closest('.article-card');
+            if (!card) return;
+            const published = card.getAttribute('data-published');
+            const id = card.getAttribute('data-id');
+            const slug = card.getAttribute('data-slug');
+            if (published === '0' && id) {
+                goToDraftEdit(id);
+            } else if (slug) {
+                goToArticle(slug);
+            }
         });
 
         // Saved + Liked lists
@@ -183,26 +221,40 @@
             if (!target) return;
             if (target.classList && (target.classList.contains('article-card') || target.classList.contains('article-list-item') || target.classList.contains('comment-item'))) {
                 const slug = target.getAttribute('data-slug');
-                if (slug) goToArticle(slug);
+                const published = target.getAttribute('data-published');
+                const id = target.getAttribute('data-id');
+                if (published === '0' && id) {
+                    goToDraftEdit(id);
+                } else if (slug) {
+                    goToArticle(slug);
+                }
             }
         });
+    }
+
+    const VALID_TABS = ['articles', 'drafts', 'saved', 'liked', 'comments', 'settings'];
+
+    function setActiveTab(tab) {
+        qsa('.tab-btn').forEach(btn => btn.classList.toggle('active', btn.getAttribute('data-tab') === tab));
+        qsa('.tab-content').forEach(tc => tc.classList.toggle('active', tc.id === `${tab}-tab`));
+    }
+
+    async function activateTab(tab) {
+        const chosen = VALID_TABS.includes(tab) ? tab : 'articles';
+        setActiveTab(chosen);
+        if (chosen === 'articles') await loadArticles();
+        if (chosen === 'drafts') await loadDrafts();
+        if (chosen === 'saved') await loadSaved();
+        if (chosen === 'liked') await loadLiked();
+        if (chosen === 'comments') await loadComments();
     }
 
     // Tabs
     function setupTabs() {
         qsa('.tab-btn').forEach(btn => {
-            btn.addEventListener('click', async () => {
+            btn.addEventListener('click', () => {
                 const tab = btn.getAttribute('data-tab');
-                qsa('.tab-btn').forEach(b => b.classList.remove('active'));
-                btn.classList.add('active');
-                qsa('.tab-content').forEach(tc => tc.classList.remove('active'));
-                const active = qs('#' + tab + '-tab');
-                if (active) active.classList.add('active');
-
-                if (tab === 'articles') await loadArticles();
-                if (tab === 'saved') await loadSaved();
-                if (tab === 'liked') await loadLiked();
-                if (tab === 'comments') await loadComments();
+                activateTab(tab);
             });
         });
     }
@@ -269,6 +321,12 @@
         setupNavigation();
         setupProfileForm();
         await loadOverview();
-        await loadArticles(); // default active tab
+        const params = new URLSearchParams(window.location.search);
+        const initialTab = params.get('tab') || 'articles';
+        await activateTab(initialTab);
+        if (initialTab !== 'drafts') {
+            // Preload drafts to get accurate badge count even before opening the tab
+            await loadDrafts();
+        }
     })();
 })();

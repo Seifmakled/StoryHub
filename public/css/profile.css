@@ -226,6 +226,20 @@ body {
     margin-bottom: -2px;
 }
 
+.tab-count {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 24px;
+    padding: 0 0.5rem;
+    height: 24px;
+    border-radius: 999px;
+    background: var(--light-color);
+    color: var(--dark-color);
+    font-size: 0.85rem;
+    font-weight: 700;
+}
+
 .tab-btn:hover {
     color: var(--primary-color);
 }
@@ -271,6 +285,23 @@ body {
     height: 200px;
     position: relative;
     overflow: hidden;
+}
+
+.status-badge {
+    position: absolute;
+    top: 0.75rem;
+    left: 0.75rem;
+    padding: 0.35rem 0.75rem;
+    border-radius: 999px;
+    font-size: 0.85rem;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    color: white;
+    box-shadow: var(--shadow);
+}
+
+.status-badge.draft {
+    background: linear-gradient(135deg, #f59e0b, #f97316);
 }
 
 .article-image img {

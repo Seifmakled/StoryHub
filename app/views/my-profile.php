@@ -89,7 +89,10 @@ include __DIR__ . '/../partials/navbar.php';
     <div class="profile-content">
         <div class="profile-tabs">
             <button class="tab-btn active" data-tab="articles">
-                <i class="fas fa-newspaper"></i> My Articles
+                <i class="fas fa-newspaper"></i> My Articles <span class="tab-count" id="countArticles">0</span>
+            </button>
+            <button class="tab-btn" data-tab="drafts">
+                <i class="fas fa-file-alt"></i> Drafts <span class="tab-count" id="countDrafts">0</span>
             </button>
             <button class="tab-btn" data-tab="saved">
                 <i class="fas fa-bookmark"></i> Saved
@@ -110,6 +113,11 @@ include __DIR__ . '/../partials/navbar.php';
             <div class="articles-grid" id="myArticlesContainer">
                 <!-- Populated by JS -->
             </div>
+        </div>
+
+        <!-- Drafts Tab -->
+        <div class="tab-content" id="drafts-tab">
+            <div class="articles-grid" id="draftsContainer"></div>
         </div>
 
         <!-- Saved Tab -->

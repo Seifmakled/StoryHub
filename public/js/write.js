@@ -13,7 +13,9 @@
     const saveDraftBtn = document.getElementById('saveDraft');
     const form = document.getElementById('writeForm');
 
-    const STORAGE_KEY = 'storyhub_write_draft';
+    const params = new URLSearchParams(window.location.search);
+    const editingId = params.get('edit');
+    const STORAGE_KEY = editingId ? `storyhub_write_edit_${editingId}` : 'storyhub_write_draft';
 
     const readFile = (file) => new Promise((resolve, reject) => {
         const reader = new FileReader();
@@ -64,6 +66,24 @@
     }
 
     // Autosave to localStorage
+    const applyDraftToForm = (draft) => {
+        if (!draft) return;
+        if (titleInput) titleInput.value = draft.title || '';
+        if (subtitleInput) subtitleInput.value = draft.subtitle || '';
+        if (bodyInput) bodyInput.value = draft.body || '';
+        if (tagsInput) tagsInput.value = draft.tags || '';
+        if (visibilityInput && draft.visibility) visibilityInput.value = draft.visibility;
+        if (visibilityToggle) {
+            visibilityToggle.querySelectorAll('button').forEach(b => {
+                b.classList.toggle('active', b.dataset.value === (draft.visibility || 'public'));
+            });
+        }
+        if (coverPreview && draft.cover) {
+            coverPreview.src = draft.cover;
+            coverPreview.style.display = 'block';
+        }
+    };
+
     const saveDraft = () => {
         const draft = {
             title: titleInput?.value || '',
@@ -82,30 +102,42 @@
         }
     };
 
-    const loadDraft = () => {
+    const loadLocalDraft = () => {
         try {
             const stored = localStorage.getItem(STORAGE_KEY);
-            if (!stored) return;
+            if (!stored) return null;
             const draft = JSON.parse(stored);
-            if (titleInput) titleInput.value = draft.title || '';
-            if (subtitleInput) subtitleInput.value = draft.subtitle || '';
-            if (bodyInput) bodyInput.value = draft.body || '';
-            if (tagsInput) tagsInput.value = draft.tags || '';
-            if (visibilityInput && draft.visibility) visibilityInput.value = draft.visibility;
-            if (visibilityToggle) {
-                visibilityToggle.querySelectorAll('button').forEach(b => {
-                    b.classList.toggle('active', b.dataset.value === (draft.visibility || 'public'));
-                });
-            }
-            if (coverPreview && draft.cover) {
-                coverPreview.src = draft.cover;
-                coverPreview.style.display = 'block';
-            }
+            applyDraftToForm(draft);
             autosaveStatus.textContent = 'Draft loaded';
+            return draft;
         } catch (err) {
             autosaveStatus.textContent = 'Could not load draft';
+            return null;
         }
     };
+
+    async function loadServerDraft() {
+        if (!editingId) return;
+        try {
+            const res = await fetch(`index.php?url=api-articles&id=${encodeURIComponent(editingId)}`, { credentials: 'same-origin' });
+            const payload = await res.json();
+            if (!res.ok) throw new Error(payload.error || res.statusText || 'Failed to load draft');
+            const a = payload.data;
+            const draft = {
+                title: a.title || '',
+                subtitle: a.subtitle || a.excerpt || '',
+                body: a.content || '',
+                tags: a.tags || '',
+                visibility: a.is_published === 1 ? 'public' : 'draft',
+                cover: a.featured_image ? `public/images/${a.featured_image}` : null
+            };
+            applyDraftToForm(draft);
+            autosaveStatus.textContent = 'Draft loaded from server';
+        } catch (err) {
+            autosaveStatus.textContent = 'Could not load server draft';
+            console.error('Load draft error:', err);
+        }
+    }
 
     [titleInput, subtitleInput, bodyInput, tagsInput].forEach(el => {
         if (!el) return;
@@ -122,59 +154,77 @@
         });
     }
 
+    async function submitArticle(visibilityMode) {
+        const title = titleInput?.value.trim() || '';
+        const body = bodyInput?.value.trim() || '';
+        const isDraft = visibilityMode === 'draft';
+
+        if (title.length < 3) {
+            autosaveStatus.textContent = 'Add a title (min 3 characters).';
+            return;
+        }
+        if (!isDraft && body.length < 20) {
+            autosaveStatus.textContent = 'Story body is too short (min 20 characters).';
+            return;
+        }
+
+        const fd = new FormData();
+        fd.append('title', title);
+        fd.append('subtitle', subtitleInput?.value || '');
+        fd.append('body', body);
+        fd.append('tags', tagsInput?.value || '');
+        fd.append('visibility', visibilityMode);
+        if (editingId) {
+            fd.append('id', editingId);
+        }
+
+        if (coverInput && coverInput.files && coverInput.files[0]) {
+            fd.append('cover', coverInput.files[0]);
+        }
+
+        const res = await fetch('index.php?url=api-articles', {
+            method: 'POST',
+            body: fd,
+            credentials: 'same-origin'
+        });
+
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) {
+            throw new Error(data.error || res.statusText || 'Failed to save');
+        }
+
+        localStorage.removeItem(STORAGE_KEY);
+        autosaveStatus.textContent = data.message || 'Saved';
+        return data;
+    }
+
     if (form) {
         let submitting = false;
         form.addEventListener('submit', async (e) => {
             e.preventDefault();
             if (submitting) return;
-
-            const title = titleInput?.value.trim() || '';
-            const body = bodyInput?.value.trim() || '';
-            const visibility = visibilityInput?.value || 'public';
-
-            if (title.length < 3) {
-                alert('Please add a title (min 3 characters).');
-                return;
-            }
-            if (body.length < 20) {
-                alert('Story body is too short (min 20 characters).');
-                return;
-            }
-
             submitting = true;
-            autosaveStatus.textContent = 'Publishing…';
             const publishBtn = document.getElementById('publishBtn');
             if (publishBtn) publishBtn.disabled = true;
-
+            autosaveStatus.textContent = 'Publishing…';
             try {
-                const fd = new FormData();
-                fd.append('title', title);
-                fd.append('subtitle', subtitleInput?.value || '');
-                fd.append('body', body);
-                fd.append('tags', tagsInput?.value || '');
-                fd.append('visibility', visibility);
+                const visibilityValue = visibilityInput?.value || 'public';
+                const result = await submitArticle(visibilityValue);
+                if (!result) throw new Error('No response from server');
 
-                if (coverInput && coverInput.files && coverInput.files[0]) {
-                    fd.append('cover', coverInput.files[0]);
+                if (visibilityValue === 'draft') {
+                    autosaveStatus.textContent = 'Draft saved. Redirecting…';
+                    window.location.href = 'index.php?url=my-profile&tab=drafts';
+                } else if (result.data && result.data.slug) {
+                    autosaveStatus.textContent = 'Published! Redirecting…';
+                    window.location.href = 'index.php?url=article&slug=' + encodeURIComponent(result.data.slug);
+                } else {
+                    autosaveStatus.textContent = 'Saved. Redirecting…';
+                    window.location.href = 'index.php?url=my-profile';
                 }
-
-                const res = await fetch('index.php?url=api-articles', {
-                    method: 'POST',
-                    body: fd
-                });
-
-                const data = await res.json().catch(() => ({}));
-                if (!res.ok) {
-                    throw new Error(data.error || res.statusText || 'Failed to publish');
-                }
-
-                localStorage.removeItem(STORAGE_KEY);
-                autosaveStatus.textContent = data.message || 'Saved';
-                alert('Story saved! Redirecting to your profile.');
-                window.location.href = 'index.php?url=my-profile';
             } catch (err) {
                 autosaveStatus.textContent = 'Error: ' + err.message;
-                alert('Could not publish: ' + err.message);
+                console.error('Publish error:', err);
             } finally {
                 submitting = false;
                 if (publishBtn) publishBtn.disabled = false;
@@ -182,5 +232,29 @@
         });
     }
 
-    loadDraft();
+    if (saveDraftBtn) {
+        saveDraftBtn.addEventListener('click', async (e) => {
+            e.preventDefault();
+            autosaveStatus.textContent = 'Saving draft…';
+            try {
+                const result = await submitArticle('draft');
+                if (!result) throw new Error('No response from server');
+                autosaveStatus.textContent = 'Draft saved. Redirecting…';
+                window.location.href = 'index.php?url=my-profile&tab=drafts';
+            } catch (err) {
+                autosaveStatus.textContent = 'Error: ' + err.message;
+                console.error('Draft save error:', err);
+            }
+        });
+    }
+
+    // Init
+    const local = loadLocalDraft();
+    if (!local && editingId) {
+        loadServerDraft();
+    }
+    if (editingId && visibilityInput) {
+        // Default to draft when editing unless server/local overrides later
+        visibilityInput.value = visibilityInput.value || 'draft';
+    }
 })();

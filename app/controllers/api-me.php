@@ -75,8 +75,20 @@ try {
                         (SELECT COUNT(*) FROM likes l WHERE l.article_id = a.id) AS likes_count,
                         (SELECT COUNT(*) FROM comments c WHERE c.article_id = a.id) AS comments_count
                  FROM articles a
-                 WHERE a.user_id = ?
+                 WHERE a.user_id = ? AND a.is_published = 1
                  ORDER BY a.created_at DESC'
+            );
+            $stmt->execute([$userId]);
+            echo json_encode(['data' => $stmt->fetchAll()]);
+            exit;
+        }
+
+        if ($section === 'drafts') {
+            $stmt = $conn->prepare(
+                'SELECT a.id, a.title, a.slug, a.excerpt, a.featured_image, a.views, a.is_published, a.created_at, a.updated_at
+                 FROM articles a
+                 WHERE a.user_id = ? AND a.is_published = 0
+                 ORDER BY a.updated_at DESC'
             );
             $stmt->execute([$userId]);
             echo json_encode(['data' => $stmt->fetchAll()]);
