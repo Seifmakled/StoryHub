@@ -1,8 +1,7 @@
 FROM php:8.2-apache
 
-# Disable all MPMs first (important!)
-RUN a2dismod mpm_event mpm_worker || true
-RUN a2enmod mpm_prefork rewrite
+# Enable rewrite only (safe)
+RUN a2enmod rewrite
 
 # Copy project files
 COPY . /var/www/html/
