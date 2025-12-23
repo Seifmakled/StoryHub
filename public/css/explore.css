@@ -342,6 +342,23 @@ body {
     grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
 }
 
+.genre-section {
+    margin-bottom: 2.5rem;
+}
+
+.genre-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1rem;
+}
+
+.genre-header h2 {
+    margin: 0;
+    font-size: 1.3rem;
+    color: var(--dark-color, #0f172a);
+}
+
 .articles-container.list-view {
     grid-template-columns: 1fr;
 }

@@ -11,6 +11,7 @@ document.addEventListener('DOMContentLoaded', function() {
     let activeFilter = 'all';
     let activeCategory = 'all';
     let activeSort = 'latest';
+    const GENRES = ['technology','design','business','health','travel','food','lifestyle','entertainment'];
 
     const base = (typeof window.APP_BASE === 'string') ? window.APP_BASE : '';
 
@@ -27,7 +28,7 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
 
-        const html = list.map((a) => {
+        const renderCard = (a) => {
             const cover = a.featured_image ? `${base}public/images/${a.featured_image}` : `${base}public/images/article-placeholder.jpg`;
             const authorImg = a.profile_image ? `${base}public/images/${a.profile_image}` : `${base}public/images/default-avatar.jpg`;
             const authorName = a.full_name || a.username || 'Author';
@@ -67,7 +68,23 @@ document.addEventListener('DOMContentLoaded', function() {
                     </div>
                 </div>
             </article>`;
-        }).join('');
+        };
+
+        let html = '';
+        if (activeCategory === 'all') {
+            GENRES.forEach((g) => {
+                const group = list.filter(a => (a.category || '').toLowerCase() === g);
+                if (!group.length) return;
+                const cards = group.map(renderCard).join('');
+                html += `<section class="genre-section"><div class="genre-header"><h2>${g.charAt(0).toUpperCase() + g.slice(1)}</h2></div><div class="articles-container grid-view">${cards}</div></section>`;
+            });
+            const leftovers = list.filter(a => !GENRES.includes((a.category || '').toLowerCase()));
+            if (leftovers.length) {
+                html += `<section class="genre-section"><div class="genre-header"><h2>Other</h2></div><div class="articles-container grid-view">${leftovers.map(renderCard).join('')}</div></section>`;
+            }
+        } else {
+            html = list.map(renderCard).join('');
+        }
 
         articlesContainer.innerHTML = html;
         if (resultsCount) {

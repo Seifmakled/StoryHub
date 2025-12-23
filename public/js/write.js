@@ -7,6 +7,8 @@
     const subtitleInput = document.getElementById('subtitleInput');
     const bodyInput = document.getElementById('bodyInput');
     const tagsInput = document.getElementById('tagsInput');
+    const categoryInput = document.getElementById('categoryInput');
+        const pillSelect = document.querySelector('.pill-select');
     const visibilityToggle = document.getElementById('visibilityToggle');
     const visibilityInput = document.getElementById('visibilityInput');
     const autosaveStatus = document.getElementById('autosaveStatus');
@@ -72,7 +74,13 @@
         if (subtitleInput) subtitleInput.value = draft.subtitle || '';
         if (bodyInput) bodyInput.value = draft.body || '';
         if (tagsInput) tagsInput.value = draft.tags || '';
+        if (categoryInput && draft.category) categoryInput.value = draft.category;
         if (visibilityInput && draft.visibility) visibilityInput.value = draft.visibility;
+            if (pillSelect && draft.category) {
+                pillSelect.querySelectorAll('button').forEach(b => {
+                    b.classList.toggle('active', b.dataset.value === draft.category);
+                });
+            }
         if (visibilityToggle) {
             visibilityToggle.querySelectorAll('button').forEach(b => {
                 b.classList.toggle('active', b.dataset.value === (draft.visibility || 'public'));
@@ -90,6 +98,7 @@
             subtitle: subtitleInput?.value || '',
             body: bodyInput?.value || '',
             tags: tagsInput?.value || '',
+            category: categoryInput?.value || '',
             visibility: visibilityInput?.value || 'public',
             cover: coverPreview?.src && coverPreview.style.display !== 'none' ? coverPreview.src : null,
             updated: Date.now()
@@ -128,6 +137,7 @@
                 subtitle: a.subtitle || a.excerpt || '',
                 body: a.content || '',
                 tags: a.tags || '',
+                category: a.category || '',
                 visibility: a.is_published === 1 ? 'public' : 'draft',
                 cover: a.featured_image ? `public/images/${a.featured_image}` : null
             };
@@ -154,9 +164,30 @@
         });
     }
 
+    function setupPillSelect() {
+        if (!pillSelect || !categoryInput) return;
+        pillSelect.addEventListener('click', (e) => {
+            const btn = e.target.closest('button[data-value]');
+            if (!btn) return;
+            pillSelect.querySelectorAll('button').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            categoryInput.value = btn.dataset.value;
+        });
+
+        // Default selection so the control never looks empty
+        if (!categoryInput.value) {
+            const first = pillSelect.querySelector('button[data-value]');
+            if (first) {
+                first.classList.add('active');
+                categoryInput.value = first.dataset.value;
+            }
+        }
+    }
+
     async function submitArticle(visibilityMode) {
         const title = titleInput?.value.trim() || '';
         const body = bodyInput?.value.trim() || '';
+        const category = categoryInput?.value;
         const isDraft = visibilityMode === 'draft';
 
         if (title.length < 3) {
@@ -167,12 +198,17 @@
             autosaveStatus.textContent = 'Story body is too short (min 20 characters).';
             return;
         }
+        if (!category) {
+            autosaveStatus.textContent = 'Please choose a genre.';
+            return;
+        }
 
         const fd = new FormData();
         fd.append('title', title);
         fd.append('subtitle', subtitleInput?.value || '');
         fd.append('body', body);
         fd.append('tags', tagsInput?.value || '');
+        fd.append('category', category);
         fd.append('visibility', visibilityMode);
         if (editingId) {
             fd.append('id', editingId);
@@ -257,4 +293,5 @@
         // Default to draft when editing unless server/local overrides later
         visibilityInput.value = visibilityInput.value || 'draft';
     }
+    setupPillSelect();
 })();

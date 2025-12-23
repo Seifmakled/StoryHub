@@ -131,7 +131,22 @@
 .field-label { font-weight: 700; color: var(--dark-color); }
 .field-hint { color: #94a3b8; font-size: 0.9rem; }
 
-input[type="text"], textarea {
+.genre-field .field-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.genre-field .label-pill {
+    padding: 0.15rem 0.6rem;
+    border-radius: 999px;
+    background: linear-gradient(120deg, rgba(99, 102, 241, 0.16), rgba(236, 72, 153, 0.14));
+    color: #4338ca;
+    font-size: 0.82rem;
+    font-weight: 800;
+}
+
+input[type="text"], select, textarea {
     width: 100%;
     border: 1px solid rgba(148, 163, 184, 0.6);
     border-radius: 12px;
@@ -141,10 +156,97 @@ input[type="text"], textarea {
     background: #fff;
 }
 
-input[type="text"]:focus, textarea:focus {
+input[type="text"]:focus, select:focus, textarea:focus {
     outline: none;
     border-color: var(--primary-color);
     box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.12);
+}
+
+select {
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    padding-right: 3rem;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+select:invalid {
+    color: #94a3b8;
+}
+
+.select-wrap {
+    position: relative;
+    border-radius: 12px;
+    border: 1px solid rgba(148, 163, 184, 0.6);
+    box-shadow: 0 14px 32px -24px rgba(15, 23, 42, 0.35);
+    background: #fff;
+}
+
+.select-wrap select {
+    width: 100%;
+    border: none;
+    box-shadow: none;
+    padding: 0.95rem 1.05rem;
+}
+
+.select-wrap::after {
+    content: '';
+    position: absolute;
+    right: 14px;
+    top: 50%;
+    width: 10px;
+    height: 10px;
+    border-right: 2px solid #94a3b8;
+    border-bottom: 2px solid #94a3b8;
+    transform: translateY(-60%) rotate(45deg);
+    pointer-events: none;
+}
+
+.select-wrap:focus-within {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.14), 0 18px 40px -28px rgba(99, 102, 241, 0.45);
+}
+
+.select-wrap select:not(:invalid) {
+    color: var(--dark-color);
+}
+
+.pill-select {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 0.5rem;
+    background: rgba(148, 163, 184, 0.12);
+    padding: 0.55rem;
+    border-radius: 14px;
+    border: 1px solid rgba(148, 163, 184, 0.35);
+    box-shadow: 0 12px 30px -26px rgba(15, 23, 42, 0.35);
+}
+
+.pill-select button {
+    border: none;
+    background: #fff;
+    border-radius: 12px;
+    padding: 0.6rem 0.8rem;
+    font-weight: 700;
+    color: #334155;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border: 1px solid rgba(148, 163, 184, 0.4);
+    box-shadow: 0 10px 24px -20px rgba(99, 102, 241, 0.35);
+}
+
+.pill-select button:hover {
+    border-color: var(--primary-color);
+    color: var(--primary-color);
+    transform: translateY(-1px);
+}
+
+.pill-select button.active {
+    background: linear-gradient(120deg, rgba(99, 102, 241, 0.12), rgba(236, 72, 153, 0.12));
+    border-color: var(--primary-color);
+    color: var(--primary-color);
+    box-shadow: 0 16px 38px -24px rgba(99, 102, 241, 0.55);
 }
 
 textarea {

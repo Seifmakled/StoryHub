@@ -99,7 +99,7 @@ try {
         $total = (int)($countStmt->fetch()['total'] ?? 0);
 
         $stmt = $conn->prepare(
-            'SELECT a.id, a.title, a.slug, a.excerpt, a.featured_image, a.category, a.tags, a.is_featured, a.created_at, a.views,
+                'SELECT a.id, a.title, a.slug, a.excerpt, a.featured_image, a.category, a.tags, a.is_featured, a.created_at, a.views,
                     u.username, u.full_name, u.profile_image,
                     (SELECT COUNT(*) FROM likes l WHERE l.article_id = a.id) AS likes_count,
                     (SELECT COUNT(*) FROM comments c WHERE c.article_id = a.id) AS comments_count
@@ -136,8 +136,16 @@ try {
         $subtitle = isset($_POST['subtitle']) ? trim($_POST['subtitle']) : '';
         $body = isset($_POST['body']) ? trim($_POST['body']) : '';
         $tags = isset($_POST['tags']) ? $articleService->normalizeTags($_POST['tags']) : '';
+        $category = isset($_POST['category']) ? strtolower(trim($_POST['category'])) : '';
         $visibility = isset($_POST['visibility']) ? $_POST['visibility'] : 'public'; // public|private|draft
         $articleId = isset($_POST['id']) ? (int)$_POST['id'] : null;
+
+        $allowedCategories = ['technology','design','business','health','travel','food','lifestyle','entertainment'];
+        if (!in_array($category, $allowedCategories, true)) {
+            http_response_code(422);
+            echo json_encode(['error' => 'Category is required and must be valid']);
+            exit;
+        }
 
         if (strlen($title) < 3) {
             http_response_code(422);
@@ -191,16 +199,17 @@ try {
         if ($articleId) {
             $stmt = $conn->prepare(
                 'UPDATE articles
-                 SET title = :title, content = :content, excerpt = :excerpt, featured_image = :featured_image,
-                     tags = :tags, is_published = :is_published, updated_at = NOW()
-                 WHERE id = :id AND user_id = :user_id'
-            );
+                     SET title = :title, content = :content, excerpt = :excerpt, featured_image = :featured_image,
+                         category = :category, tags = :tags, is_published = :is_published, updated_at = NOW()
+                     WHERE id = :id AND user_id = :user_id'
+                );
 
             $stmt->execute([
                 ':title' => $title,
                 ':content' => $body,
                 ':excerpt' => $excerpt,
                 ':featured_image' => $featuredImage,
+                ':category' => $category,
                 ':tags' => $tags,
                 ':is_published' => $isPublished,
                 ':id' => $articleId,
@@ -216,6 +225,7 @@ try {
                     'title' => $title,
                     'excerpt' => $excerpt,
                     'featured_image' => $featuredImage,
+                    'category' => $category,
                     'tags' => $tags,
                     'is_published' => $isPublished,
                     'visibility' => $visibility
@@ -236,7 +246,7 @@ try {
             ':content' => $body,
             ':excerpt' => $excerpt,
             ':featured_image' => $featuredImage,
-            ':category' => null,
+            ':category' => $category,
             ':tags' => $tags,
             ':is_published' => $isPublished
         ]);
@@ -251,6 +261,7 @@ try {
                 'title' => $title,
                 'excerpt' => $excerpt,
                 'featured_image' => $featuredImage,
+                'category' => $category,
                 'tags' => $tags,
                 'is_published' => $isPublished,
                 'visibility' => $visibility
