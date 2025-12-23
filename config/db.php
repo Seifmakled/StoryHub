@@ -9,6 +9,7 @@ class Database {
     private static $instance = null;
     private static $conn = null;
     private static $bootstrapped = false;
+    private static $testPdo = null;
 
     // Private constructor to prevent direct instantiation
     private function __construct() {
@@ -34,10 +35,28 @@ class Database {
     }
 
     public static function getConnection() {
+        if (self::$testPdo instanceof PDO) {
+            return self::$testPdo;
+        }
         if (!self::$bootstrapped) {
             self::bootstrap();
         }
         return self::$conn;
+    }
+
+    /**
+     * Allow tests to inject an in-memory PDO (e.g., SQLite) without touching MySQL.
+     */
+    public static function setTestConnection(PDO $pdo): void {
+        $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+        $pdo->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
+        if ($pdo->getAttribute(PDO::ATTR_DRIVER_NAME) === 'sqlite') {
+            $pdo->exec('PRAGMA foreign_keys = ON');
+        }
+        self::$testPdo = $pdo;
+        self::$conn = $pdo;
+        self::$bootstrapped = true;
+        self::createTables($pdo);
     }
 
     private static function bootstrap(): void {
@@ -64,7 +83,7 @@ class Database {
             );
 
             // 3) Create/upgrade required tables
-            self::createTables();
+            self::createTables(self::$conn);
 
             self::$bootstrapped = true;
 
@@ -73,10 +92,109 @@ class Database {
         }
     }
 
-    private static function createTables(): void {
+    private static function createTables(PDO $pdo): void {
         try {
-            // Users table (idempotent)
-            self::$conn->exec(
+            $driver = $pdo->getAttribute(PDO::ATTR_DRIVER_NAME);
+
+            // For SQLite use simplified, compatible DDL
+            if ($driver === 'sqlite') {
+                $pdo->exec('CREATE TABLE IF NOT EXISTS users (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    username TEXT NOT NULL UNIQUE,
+                    email TEXT NOT NULL UNIQUE,
+                    password TEXT NOT NULL,
+                    full_name TEXT NULL,
+                    bio TEXT NULL,
+                    profile_image TEXT NOT NULL DEFAULT "default-avatar.jpg",
+                    is_admin INTEGER NOT NULL DEFAULT 0,
+                    verification_code TEXT NULL,
+                    is_verified INTEGER NOT NULL DEFAULT 0,
+                    reset_token TEXT NULL,
+                    reset_token_expiry DATETIME NULL,
+                    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+                );');
+
+                $pdo->exec('CREATE TABLE IF NOT EXISTS articles (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    user_id INTEGER NOT NULL,
+                    title TEXT NOT NULL,
+                    slug TEXT NOT NULL UNIQUE,
+                    content TEXT NULL,
+                    excerpt TEXT NULL,
+                    featured_image TEXT NULL,
+                    category TEXT NULL,
+                    tags TEXT NULL,
+                    is_published INTEGER NOT NULL DEFAULT 0,
+                    is_featured INTEGER NOT NULL DEFAULT 0,
+                    views INTEGER NOT NULL DEFAULT 0,
+                    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                    FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE
+                );');
+
+                $pdo->exec('CREATE TABLE IF NOT EXISTS likes (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    user_id INTEGER NOT NULL,
+                    article_id INTEGER NOT NULL,
+                    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                    UNIQUE(user_id, article_id),
+                    FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE,
+                    FOREIGN KEY(article_id) REFERENCES articles(id) ON DELETE CASCADE
+                );');
+
+                $pdo->exec('CREATE TABLE IF NOT EXISTS bookmarks (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    user_id INTEGER NOT NULL,
+                    article_id INTEGER NOT NULL,
+                    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                    UNIQUE(user_id, article_id),
+                    FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE,
+                    FOREIGN KEY(article_id) REFERENCES articles(id) ON DELETE CASCADE
+                );');
+
+                $pdo->exec('CREATE TABLE IF NOT EXISTS comments (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    user_id INTEGER NOT NULL,
+                    article_id INTEGER NOT NULL,
+                    content TEXT NOT NULL,
+                    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                    FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE,
+                    FOREIGN KEY(article_id) REFERENCES articles(id) ON DELETE CASCADE
+                );');
+
+                $pdo->exec('CREATE TABLE IF NOT EXISTS follows (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    follower_id INTEGER NOT NULL,
+                    followee_id INTEGER NOT NULL,
+                    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                    UNIQUE(follower_id, followee_id),
+                    FOREIGN KEY(follower_id) REFERENCES users(id) ON DELETE CASCADE,
+                    FOREIGN KEY(followee_id) REFERENCES users(id) ON DELETE CASCADE
+                );');
+
+                $pdo->exec('CREATE TABLE IF NOT EXISTS notifications (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    user_id INTEGER NOT NULL,
+                    actor_id INTEGER NULL,
+                    type TEXT NOT NULL,
+                    entity_id INTEGER NULL,
+                    message TEXT NOT NULL,
+                    is_read INTEGER NOT NULL DEFAULT 0,
+                    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                    FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE
+                );');
+
+                return;
+            }
+
+            // MySQL / MariaDB path remains unchanged
+            $execute = function(string $sql) use ($pdo) {
+                $pdo->exec($sql);
+            };
+
+            $execute(
                 "CREATE TABLE IF NOT EXISTS `users` (
                     `id` INT AUTO_INCREMENT PRIMARY KEY,
                     `username` VARCHAR(50) NOT NULL UNIQUE,
@@ -97,8 +215,7 @@ class Database {
                 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;"
             );
 
-            // Articles table
-            self::$conn->exec(
+            $execute(
                 "CREATE TABLE IF NOT EXISTS `articles` (
                     `id` INT AUTO_INCREMENT PRIMARY KEY,
                     `user_id` INT NOT NULL,
@@ -120,8 +237,7 @@ class Database {
                 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;"
             );
 
-            // Likes table
-            self::$conn->exec(
+            $execute(
                 "CREATE TABLE IF NOT EXISTS `likes` (
                     `id` INT AUTO_INCREMENT PRIMARY KEY,
                     `user_id` INT NOT NULL,
@@ -134,8 +250,7 @@ class Database {
                 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;"
             );
 
-            // Bookmarks (saved articles) table
-            self::$conn->exec(
+            $execute(
                 "CREATE TABLE IF NOT EXISTS `bookmarks` (
                     `id` INT AUTO_INCREMENT PRIMARY KEY,
                     `user_id` INT NOT NULL,
@@ -148,8 +263,7 @@ class Database {
                 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;"
             );
 
-            // Comments table
-            self::$conn->exec(
+            $execute(
                 "CREATE TABLE IF NOT EXISTS `comments` (
                     `id` INT AUTO_INCREMENT PRIMARY KEY,
                     `user_id` INT NOT NULL,
@@ -164,8 +278,7 @@ class Database {
                 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;"
             );
 
-            // Follows table
-            self::$conn->exec(
+            $execute(
                 "CREATE TABLE IF NOT EXISTS `follows` (
                     `id` INT AUTO_INCREMENT PRIMARY KEY,
                     `follower_id` INT NOT NULL,
@@ -178,8 +291,7 @@ class Database {
                 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;"
             );
 
-            // Notifications table
-            self::$conn->exec(
+            $execute(
                 "CREATE TABLE IF NOT EXISTS `notifications` (
                     `id` INT AUTO_INCREMENT PRIMARY KEY,
                     `user_id` INT NOT NULL,
