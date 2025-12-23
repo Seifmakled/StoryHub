@@ -236,6 +236,23 @@ document.addEventListener('DOMContentLoaded', function() {
 
         const modelUrl = `${base}public/models/StoryHub.obj`;
 
+        const getThemeColors = () => {
+            const readVar = (name, fallback) => {
+                try {
+                    const v = getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+                    return v || fallback;
+                } catch (_) {
+                    return fallback;
+                }
+            };
+
+            return {
+                primary: readVar('--primary-color', '#6366f1'),
+                secondary: readVar('--secondary-color', '#8b5cf6'),
+                accent: readVar('--accent-color', '#ec4899')
+            };
+        };
+
         const hasWebGL = () => {
             try {
                 const testCanvas = document.createElement('canvas');
@@ -255,6 +272,14 @@ document.addEventListener('DOMContentLoaded', function() {
         let scene;
         let model;
         let animationId;
+
+        // Spin + interaction
+        const autoSpinSpeed = 0.008; // increase/decrease for faster/slower auto spin
+        let isDragging = false;
+        let lastPointerX = 0;
+        let lastPointerY = 0;
+        let baseRotX = -0.08;
+        let baseRotY = 0.35;
 
         const setRendererSize = () => {
             const width = Math.max(1, container.clientWidth);
@@ -295,19 +320,28 @@ document.addEventListener('DOMContentLoaded', function() {
                 powerPreference: 'high-performance'
             });
             renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+            renderer.shadowMap.enabled = false;
+            renderer.outputColorSpace = THREE.SRGBColorSpace;
+            renderer.toneMapping = THREE.ACESFilmicToneMapping;
+            renderer.toneMappingExposure = 1.1;
 
             camera = new THREE.PerspectiveCamera(45, 1, 0.1, 1000);
             camera.position.set(0, 0.9, 3.2);
 
-            const ambient = new THREE.AmbientLight(0xffffff, 0.85);
+            const ambient = new THREE.AmbientLight(0xffffff, 0.65);
             scene.add(ambient);
 
-            const keyLight = new THREE.DirectionalLight(0xffffff, 0.9);
+            const hemi = new THREE.HemisphereLight(0xffffff, 0x0b1020, 0.35);
+            scene.add(hemi);
+
+            const keyLight = new THREE.DirectionalLight(0xffffff, 1.15);
             keyLight.position.set(2.5, 4, 2);
+            keyLight.castShadow = false;
             scene.add(keyLight);
 
             const fillLight = new THREE.DirectionalLight(0xffffff, 0.35);
             fillLight.position.set(-2.5, 1, 2);
+            fillLight.castShadow = false;
             scene.add(fillLight);
 
             setRendererSize();
@@ -342,12 +376,66 @@ document.addEventListener('DOMContentLoaded', function() {
                     model.rotation.x = -0.08;
                     model.rotation.y = 0.35;
 
-                    // If materials are missing, make it visible with a neutral material
+                    baseRotX = model.rotation.x;
+                    baseRotY = model.rotation.y;
+
+                    const theme = getThemeColors();
+                    const c1 = new THREE.Color(theme.primary);
+                    const c2 = new THREE.Color(theme.secondary);
+                    // Bias the third color strongly toward accent (pink)
+                    const c3 = new THREE.Color(theme.secondary).lerp(new THREE.Color(theme.accent), 0.75);
+
+                    const gradientMaterial = new THREE.MeshStandardMaterial({
+                        vertexColors: true,
+                        metalness: 0.35,
+                        roughness: 0.45,
+                        emissive: c2.clone().multiplyScalar(0.22),
+                        emissiveIntensity: 0.55
+                    });
+
+                    // Apply a multi-color gradient using per-vertex colors
                     model.traverse((child) => {
                         if (!child || !child.isMesh) return;
-                        if (!child.material) {
-                            child.material = new THREE.MeshStandardMaterial({ color: 0xffffff, metalness: 0.1, roughness: 0.8 });
+
+                        const geometry = child.geometry;
+                        if (geometry && geometry.isBufferGeometry) {
+                            geometry.computeBoundingBox();
+                            const bbox = geometry.boundingBox;
+                            const pos = geometry.getAttribute('position');
+
+                            if (bbox && pos) {
+                                const minY = bbox.min.y;
+                                const rangeY = Math.max(1e-6, bbox.max.y - bbox.min.y);
+                                const colors = new Float32Array(pos.count * 3);
+                                const temp = new THREE.Color();
+
+                                for (let i = 0; i < pos.count; i++) {
+                                    const y = pos.getY(i);
+                                    const x = pos.getX(i);
+                                    const z = pos.getZ(i);
+                                    const t = (y - minY) / rangeY;
+
+                                    // Blend primary -> secondary -> accent by height
+                                    if (t < 0.5) {
+                                        temp.copy(c1).lerp(c2, t / 0.5);
+                                    } else {
+                                        temp.copy(c2).lerp(c3, (t - 0.5) / 0.5);
+                                    }
+
+                                    // Add a subtle “candy” banding across X/Z for extra pop
+                                    const band = (Math.sin((x + z) * 3.0) + 1) * 0.5; // 0..1
+                                    temp.lerp(c3, band * 0.28);
+
+                                    colors[i * 3 + 0] = temp.r;
+                                    colors[i * 3 + 1] = temp.g;
+                                    colors[i * 3 + 2] = temp.b;
+                                }
+
+                                geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+                            }
                         }
+
+                        child.material = gradientMaterial;
                         child.castShadow = false;
                         child.receiveShadow = false;
                     });
@@ -370,9 +458,46 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             );
 
+            const clamp = (value, min, max) => Math.min(max, Math.max(min, value));
+            const onPointerDown = (e) => {
+                isDragging = true;
+                lastPointerX = e.clientX;
+                lastPointerY = e.clientY;
+                try { canvas.setPointerCapture(e.pointerId); } catch (_) { /* ignore */ }
+            };
+            const onPointerUp = (e) => {
+                isDragging = false;
+                try { canvas.releasePointerCapture(e.pointerId); } catch (_) { /* ignore */ }
+            };
+            const onPointerMove = (e) => {
+                if (isDragging && model) {
+                    const dx = e.clientX - lastPointerX;
+                    const dy = e.clientY - lastPointerY;
+                    lastPointerX = e.clientX;
+                    lastPointerY = e.clientY;
+
+                    // Drag to rotate directly
+                    model.rotation.y += dx * 0.008;
+                    model.rotation.x = clamp(model.rotation.x + dy * 0.008, -0.9, 0.35);
+
+                    // Update bases so hover feels continuous after drag
+                    baseRotX = model.rotation.x;
+                    baseRotY = model.rotation.y;
+                    return;
+                }
+            };
+
+            canvas.addEventListener('pointerdown', onPointerDown);
+            window.addEventListener('pointerup', onPointerUp);
+            window.addEventListener('pointercancel', onPointerUp);
+            window.addEventListener('pointermove', onPointerMove);
+
             const animate = () => {
                 animationId = window.requestAnimationFrame(animate);
-                if (model) model.rotation.y += 0.003;
+                if (model) {
+                    // Auto-spin (pause while dragging)
+                    if (!isDragging) model.rotation.y += autoSpinSpeed;
+                }
                 renderer.render(scene, camera);
             };
             animate();
