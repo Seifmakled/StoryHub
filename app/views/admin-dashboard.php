@@ -46,34 +46,22 @@ include __DIR__ . '/../partials/header.php';
             <a href="#articles" class="nav-item">
                 <i class="fas fa-newspaper"></i>
                 <span>Articles</span>
-                <span class="badge">142</span>
+                <span class="badge" id="badgeArticles">0</span>
             </a>
             <a href="#users" class="nav-item">
                 <i class="fas fa-users"></i>
                 <span>Users</span>
-                <span class="badge">1.2K</span>
+                <span class="badge" id="badgeUsers">0</span>
             </a>
             <a href="#comments" class="nav-item">
                 <i class="fas fa-comments"></i>
                 <span>Comments</span>
-                <span class="badge">456</span>
-            </a>
-            <a href="#categories" class="nav-item">
-                <i class="fas fa-tags"></i>
-                <span>Categories</span>
+                <span class="badge" id="badgeComments">0</span>
             </a>
             <a href="#reports" class="nav-item">
                 <i class="fas fa-flag"></i>
                 <span>Reports</span>
                 <span class="badge alert">12</span>
-            </a>
-            <a href="#analytics" class="nav-item">
-                <i class="fas fa-chart-bar"></i>
-                <span>Analytics</span>
-            </a>
-            <a href="#settings" class="nav-item">
-                <i class="fas fa-cog"></i>
-                <span>Settings</span>
             </a>
         </nav>
 
@@ -126,10 +114,8 @@ include __DIR__ . '/../partials/header.php';
                 </div>
                 <div class="stat-content">
                     <span class="stat-label">Total Users</span>
-                    <h3 class="stat-value">1,234</h3>
-                    <span class="stat-change positive">
-                        <i class="fas fa-arrow-up"></i> 12% from last month
-                    </span>
+                    <h3 class="stat-value" id="statUsers">0</h3>
+                    <span class="stat-change" id="statUsersDelta">&nbsp;</span>
                 </div>
             </div>
 
@@ -139,10 +125,8 @@ include __DIR__ . '/../partials/header.php';
                 </div>
                 <div class="stat-content">
                     <span class="stat-label">Total Articles</span>
-                    <h3 class="stat-value">5,678</h3>
-                    <span class="stat-change positive">
-                        <i class="fas fa-arrow-up"></i> 8% from last month
-                    </span>
+                    <h3 class="stat-value" id="statArticles">0</h3>
+                    <span class="stat-change" id="statArticlesDelta">&nbsp;</span>
                 </div>
             </div>
 
@@ -152,10 +136,8 @@ include __DIR__ . '/../partials/header.php';
                 </div>
                 <div class="stat-content">
                     <span class="stat-label">Total Views</span>
-                    <h3 class="stat-value">123.5K</h3>
-                    <span class="stat-change positive">
-                        <i class="fas fa-arrow-up"></i> 23% from last month
-                    </span>
+                    <h3 class="stat-value" id="statViews">0</h3>
+                    <span class="stat-change" id="statViewsDelta">&nbsp;</span>
                 </div>
             </div>
 
@@ -165,10 +147,8 @@ include __DIR__ . '/../partials/header.php';
                 </div>
                 <div class="stat-content">
                     <span class="stat-label">Total Comments</span>
-                    <h3 class="stat-value">8,456</h3>
-                    <span class="stat-change negative">
-                        <i class="fas fa-arrow-down"></i> 3% from last month
-                    </span>
+                    <h3 class="stat-value" id="statComments">0</h3>
+                    <span class="stat-change" id="statCommentsDelta">&nbsp;</span>
                 </div>
             </div>
         </div>
@@ -203,13 +183,13 @@ include __DIR__ . '/../partials/header.php';
         <!-- Tables Section -->
         <div class="tables-grid" id="dashboard">
             <!-- Recent Articles -->
-            <div class="table-card">
+            <div class="table-card" id="articles">
                 <div class="card-header">
                     <h3><i class="fas fa-newspaper"></i> Recent Articles</h3>
                     <a href="#articles" class="btn btn-sm">View All</a>
                 </div>
                 <div class="table-wrapper">
-                    <table class="data-table">
+                    <table class="data-table" id="recentArticlesTable">
                         <thead>
                             <tr>
                                 <th>Title</th>
@@ -220,28 +200,10 @@ include __DIR__ . '/../partials/header.php';
                                 <th>Actions</th>
                             </tr>
                         </thead>
-                        <tbody>
-                            <?php for ($i = 1; $i <= 5; $i++): ?>
-                            <tr>
-                                <td>
-                                    <div class="table-title">
-                                        <img src="public/images/article-placeholder.jpg" alt="">
-                                        <span>Article Title Goes Here</span>
-                                    </div>
-                                </td>
-                                <td>John Doe</td>
-                                <td><span class="badge-cat">Technology</span></td>
-                                <td><span class="badge-status published">Published</span></td>
-                                <td>1,234</td>
-                                <td>
-                                    <div class="action-buttons">
-                                        <button class="btn-icon" title="View"><i class="fas fa-eye"></i></button>
-                                        <button class="btn-icon" title="Edit"><i class="fas fa-edit"></i></button>
-                                        <button class="btn-icon" title="Delete"><i class="fas fa-trash"></i></button>
-                                    </div>
-                                </td>
+                        <tbody id="recentArticlesBody">
+                            <tr class="loading-row" id="recentArticlesLoading">
+                                <td colspan="6">Loading articles…</td>
                             </tr>
-                            <?php endfor; ?>
                         </tbody>
                     </table>
                 </div>
@@ -273,6 +235,37 @@ include __DIR__ . '/../partials/header.php';
                         <tbody>
                         </tbody>
                     </table>
+                </div>
+            </div>
+
+            <div class="table-card" id="comments">
+                <div class="card-header">
+                    <h3><i class="fas fa-comments"></i> Comments</h3>
+                </div>
+                <div class="table-wrapper">
+                    <table class="data-table" id="commentsTable">
+                        <thead>
+                            <tr>
+                                <th>Comment</th>
+                                <th>By</th>
+                                <th>Article</th>
+                                <th>Posted</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="commentsBody">
+                            <tr class="loading-row"><td colspan="5">Loading comments…</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="table-card placeholder" id="reports">
+                <div class="card-header">
+                    <h3><i class="fas fa-flag"></i> Reports</h3>
+                </div>
+                <div class="table-wrapper">
+                    <p class="placeholder-text">Reports dashboard coming soon.</p>
                 </div>
             </div>
         </div>

@@ -30,6 +30,7 @@ $routes = [
     'api-articles' => __DIR__ . '/app/controllers/api-articles.php',
     'api-social' => __DIR__ . '/app/controllers/api-social.php',
     'api-chat' => __DIR__ . '/app/controllers/api-chat.php',
+    'api-admin' => __DIR__ . '/app/controllers/api-admin.php',
     'diag' => __DIR__ . '/app/views/diagnostics.php'
 ];
 
