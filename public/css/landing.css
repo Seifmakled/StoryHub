@@ -105,6 +105,10 @@
     background: rgba(0, 0, 0, 0.2);
 }
 
+.hero-model-fallback[hidden] {
+    display: none !important;
+}
+
 /* Container */
 .container {
     max-width: 1400px;

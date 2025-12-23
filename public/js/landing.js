@@ -318,6 +318,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 (obj) => {
                     model = obj;
 
+                    if (fallback) fallback.hidden = true;
+
                     // Center + scale to a consistent size
                     const box = new THREE.Box3().setFromObject(model);
                     const size = box.getSize(new THREE.Vector3());
@@ -330,6 +332,11 @@ document.addEventListener('DOMContentLoaded', function() {
                     const maxDim = Math.max(size.x, size.y, size.z) || 1;
                     const scale = 1.8 / maxDim;
                     model.scale.setScalar(scale);
+
+                    // Visual tweak: lift the model a bit so it feels centered
+                    // (some OBJs have their geometry weighted toward the bottom)
+                    const scaledHeight = (size.y || 1) * scale;
+                    model.position.y += scaledHeight * 2;
 
                     // Slight tilt so it reads better in the hero
                     model.rotation.x = -0.08;
