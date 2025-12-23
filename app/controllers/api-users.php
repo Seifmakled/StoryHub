@@ -35,7 +35,7 @@ try {
 		$id = isset($_GET['id']) ? (int)$_GET['id'] : 0;
 		if ($id > 0) {
 			// Basic user info - Using Repository
-			$user = $userRepository->findById($id, ['id', 'username', 'full_name', 'bio', 'profile_image', 'created_at']);
+			$user = $userRepository->findById($id, ['id', 'username', 'full_name', 'bio', 'profile_image', 'cover_image', 'created_at']);
 			if (!$user) {
 				http_response_code(404);
 				echo json_encode(['error' => 'User not found']);

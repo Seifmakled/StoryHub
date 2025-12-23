@@ -27,6 +27,50 @@ function readJsonBodyAssoc(): array {
     return is_array($data) ? $data : [];
 }
 
+function isMultipartRequest(): bool {
+    if (!empty($_FILES)) {
+        return true;
+    }
+    $ct = $_SERVER['CONTENT_TYPE'] ?? $_SERVER['HTTP_CONTENT_TYPE'] ?? '';
+    return stripos($ct, 'multipart/form-data') !== false;
+}
+
+/**
+ * Save a user-uploaded image to public/images/{subdir} with basic validation.
+ * Returns ['success' => bool, 'path' => string|null, 'error' => string|null]
+ */
+function saveUserImage(?array $file, int $userId, string $subdir, string $prefix): array {
+    if (!$file || !isset($file['tmp_name']) || ($file['error'] ?? UPLOAD_ERR_NO_FILE) === UPLOAD_ERR_NO_FILE) {
+        return ['success' => false, 'path' => null, 'error' => 'No file uploaded'];
+    }
+    if (($file['error'] ?? UPLOAD_ERR_OK) !== UPLOAD_ERR_OK) {
+        return ['success' => false, 'path' => null, 'error' => 'Upload failed'];
+    }
+
+    $allowed = ['image/jpeg' => 'jpg', 'image/png' => 'png', 'image/webp' => 'webp'];
+    $mime = $file['type'] ?? '';
+    if (!isset($allowed[$mime])) {
+        return ['success' => false, 'path' => null, 'error' => 'Invalid image type'];
+    }
+    if (($file['size'] ?? 0) > 5 * 1024 * 1024) {
+        return ['success' => false, 'path' => null, 'error' => 'Image exceeds 5MB'];
+    }
+
+    $ext = $allowed[$mime];
+    $dir = __DIR__ . '/../../public/images/' . trim($subdir, '/');
+    if (!is_dir($dir)) {
+        @mkdir($dir, 0755, true);
+    }
+
+    $name = $prefix . '_' . $userId . '_' . time() . '_' . bin2hex(random_bytes(4)) . '.' . $ext;
+    $target = rtrim($dir, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . $name;
+    if (!move_uploaded_file($file['tmp_name'], $target)) {
+        return ['success' => false, 'path' => null, 'error' => 'Failed to save image'];
+    }
+
+    return ['success' => true, 'path' => trim($subdir, '/') . '/' . $name, 'error' => null];
+}
+
 try {
     $userRepository = new UserRepository();
     
@@ -35,7 +79,7 @@ try {
 
         if ($section === 'overview') {
             // user details - Using Repository
-            $user = $userRepository->findById($userId, ['id', 'username', 'email', 'full_name', 'bio', 'profile_image', 'created_at']);
+            $user = $userRepository->findById($userId, ['id', 'username', 'email', 'full_name', 'bio', 'profile_image', 'cover_image', 'created_at']);
 
             if (!$user) {
                 http_response_code(404);
@@ -141,8 +185,8 @@ try {
     }
 
     if ($method === 'POST') {
-        // Update profile details: full_name, bio, email
-        $data = readJsonBodyAssoc();
+        // Update profile details: full_name, bio, email, and optional avatar/cover uploads
+        $data = isMultipartRequest() ? $_POST : readJsonBodyAssoc();
         $updateData = [];
 
         if (isset($data['full_name'])) {
@@ -167,6 +211,28 @@ try {
             $updateData['email'] = $email;
         }
 
+        // Handle file uploads (multipart only)
+        if (isMultipartRequest()) {
+            if (!empty($_FILES['avatar'])) {
+                $r = saveUserImage($_FILES['avatar'], $userId, 'authors', 'avatar');
+                if (!$r['success']) {
+                    http_response_code(422);
+                    echo json_encode(['error' => $r['error']]);
+                    exit;
+                }
+                $updateData['profile_image'] = $r['path'];
+            }
+            if (!empty($_FILES['cover'])) {
+                $r = saveUserImage($_FILES['cover'], $userId, 'covers', 'cover');
+                if (!$r['success']) {
+                    http_response_code(422);
+                    echo json_encode(['error' => $r['error']]);
+                    exit;
+                }
+                $updateData['cover_image'] = $r['path'];
+            }
+        }
+
         if (empty($updateData)) {
             http_response_code(400);
             echo json_encode(['error' => 'No updatable fields provided']);
@@ -175,6 +241,17 @@ try {
 
         // Update profile - Using Repository
         $userRepository->updateProfile($userId, $updateData);
+
+        // Keep session in sync for navbar/avatar usage
+        if (isset($updateData['full_name'])) {
+            $_SESSION['full_name'] = $updateData['full_name'];
+        }
+        if (isset($updateData['profile_image'])) {
+            $_SESSION['profile_image'] = $updateData['profile_image'];
+        }
+        if (isset($updateData['cover_image'])) {
+            $_SESSION['cover_image'] = $updateData['cover_image'];
+        }
 
         echo json_encode(['message' => 'Profile updated']);
         exit;

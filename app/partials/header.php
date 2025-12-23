@@ -57,12 +57,20 @@ if (!class_exists('Database')) {
 
     <!-- Loads CSS of the current page -->
     <?php if (isset($pageCSS)): ?>
-        <link rel="stylesheet" href="/StoryHub/public/css/<?php echo $pageCSS; ?>">
+        <?php
+            $cssPath = __DIR__ . '/../../public/css/' . $pageCSS;
+            $cssVer = is_file($cssPath) ? (string)filemtime($cssPath) : '1';
+        ?>
+        <link rel="stylesheet" href="/StoryHub/public/css/<?php echo $pageCSS; ?>?v=<?php echo urlencode($cssVer); ?>">
     <?php endif; ?>
 
     <!-- Page-specific JavaScript -->
 <?php if (isset($pageJS)): ?>
-    <script src="/StoryHub/public/js/<?php echo $pageJS; ?>" defer></script>
+    <?php
+        $jsPath = __DIR__ . '/../../public/js/' . $pageJS;
+        $jsVer = is_file($jsPath) ? (string)filemtime($jsPath) : '1';
+    ?>
+    <script src="/StoryHub/public/js/<?php echo $pageJS; ?>?v=<?php echo urlencode($jsVer); ?>" defer></script>
 <?php endif; ?>
 </head>
 <body>

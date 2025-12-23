@@ -140,7 +140,7 @@ include __DIR__ . '/../partials/navbar.php';
             <div class="about-section">
                 <div class="about-card">
                     <h3><i class="fas fa-user-edit"></i> Edit Profile</h3>
-                    <form id="profileForm" class="settings-form">
+                    <form id="profileForm" class="settings-form" enctype="multipart/form-data">
                         <div class="form-row">
                             <div class="form-group">
                                 <label for="fullName">Full Name</label>
@@ -149,6 +149,16 @@ include __DIR__ . '/../partials/navbar.php';
                             <div class="form-group">
                                 <label for="email">Email</label>
                                 <input type="email" id="email" placeholder="your@email.com">
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="avatarInput">Profile Picture</label>
+                                <input type="file" id="avatarInput" name="avatar" accept="image/*">
+                            </div>
+                            <div class="form-group">
+                                <label for="coverInput">Cover Picture</label>
+                                <input type="file" id="coverInput" name="cover" accept="image/*">
                             </div>
                         </div>
                         <div class="form-group">

@@ -24,12 +24,13 @@ abstract class DatabaseTestCase extends TestCase
             'full_name' => 'Test User',
             'bio' => null,
             'profile_image' => 'default-avatar.jpg',
+            'cover_image' => null,
             'is_admin' => 0,
             'is_verified' => 1
         ], $overrides);
 
         $stmt = $this->pdo->prepare(
-            'INSERT INTO users (username, email, password, full_name, bio, profile_image, is_admin, is_verified) VALUES (:u, :e, :p, :f, :b, :img, :a, :v)'
+            'INSERT INTO users (username, email, password, full_name, bio, profile_image, cover_image, is_admin, is_verified) VALUES (:u, :e, :p, :f, :b, :img, :cimg, :a, :v)'
         );
         $stmt->execute([
             ':u' => $data['username'],
@@ -38,6 +39,7 @@ abstract class DatabaseTestCase extends TestCase
             ':f' => $data['full_name'],
             ':b' => $data['bio'],
             ':img' => $data['profile_image'],
+            ':cimg' => $data['cover_image'],
             ':a' => $data['is_admin'],
             ':v' => $data['is_verified'],
         ]);
