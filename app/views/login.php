@@ -50,7 +50,7 @@ include __DIR__ . '/../partials/header.php';
                         <label for="email_or_username">Email or Username</label>
                         <div class="input-wrapper">
                             <i class="fas fa-envelope"></i>
-                            <input type="text" id="email_or_username" name="email_or_username" placeholder="Enter your email or username" required>
+                            <input type="email" id="email_or_username" name="email_or_username" placeholder="Enter your email or username" required>
                         </div>
                     </div>
 
