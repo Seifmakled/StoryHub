@@ -83,7 +83,22 @@ $navQuickFilters = [
                     </div>
                 </li>
                 <?php if (isset($_SESSION['user_id'])): ?>
-                    <li><a href="/StoryHub/index.php?url=my-profile">My Profile</a></li>
+                    <li class="nav-following" id="navFollowing">
+                        <a href="/StoryHub/index.php?url=following" class="nav-following-trigger" aria-expanded="false">
+                            Following <i class="fas fa-chevron-down"></i>
+                        </a>
+                        <div class="following-dropdown" id="followingDropdown">
+                            <div class="following-inner">
+                                <div class="following-heading">People you follow</div>
+                                <div class="following-list" id="followingList">
+                                    <div class="following-loading">Loading...</div>
+                                </div>
+                                <div class="following-footer">
+                                    <a href="/StoryHub/index.php?url=following">View all followers & following</a>
+                                </div>
+                            </div>
+                        </div>
+                    </li>
                     <?php if (isset($_SESSION['is_admin']) && $_SESSION['is_admin']): ?>
                         <li><a href="/StoryHub/index.php?url=admin">Dashboard</a></li>
                     <?php endif; ?>
@@ -126,3 +141,62 @@ $navQuickFilters = [
         </div>
     </div>
 </nav>
+
+<style>
+.nav-following { position: relative; }
+.nav-following-trigger { display: flex; align-items: center; gap: 6px; }
+.following-dropdown { position: absolute; top: 110%; left: 0; background: #fff; border: 1px solid #e5e7eb; box-shadow: 0 12px 30px rgba(0,0,0,0.12); border-radius: 10px; width: 260px; opacity: 0; pointer-events: none; transform: translateY(6px); transition: opacity 0.2s ease, transform 0.2s ease; z-index: 20; }
+.nav-following:hover .following-dropdown { opacity: 1; pointer-events: auto; transform: translateY(0); }
+.following-inner { max-height: 320px; overflow: auto; padding: 12px; }
+.following-heading { font-weight: 600; margin-bottom: 8px; font-size: 14px; }
+.following-list { display: flex; flex-direction: column; gap: 10px; }
+.following-item { display: flex; align-items: center; gap: 10px; }
+.following-avatar { width: 36px; height: 36px; border-radius: 50%; object-fit: cover; background: #f3f4f6; }
+.following-name { font-weight: 600; font-size: 14px; color: #111827; }
+.following-username { font-size: 12px; color: #6b7280; }
+.following-empty, .following-loading { color: #6b7280; font-size: 13px; }
+.following-footer { border-top: 1px solid #f3f4f6; padding-top: 10px; margin-top: 10px; font-size: 13px; }
+.following-footer a { color: #2563eb; }
+@media (max-width: 1024px) { .following-dropdown { position: static; width: 100%; box-shadow: none; border: none; transform: none; opacity: 1; pointer-events: auto; } }
+</style>
+
+<script>
+(function() {
+    const trigger = document.querySelector('.nav-following');
+    const listEl = document.getElementById('followingList');
+    const dropdown = document.getElementById('followingDropdown');
+    if (!trigger || !listEl || !dropdown) return;
+
+    let loaded = false;
+    async function loadFollowing() {
+        if (loaded) return;
+        try {
+            const res = await fetch('/StoryHub/index.php?url=api-social&following_list=1');
+            if (!res.ok) throw new Error('Failed');
+            const json = await res.json();
+            const people = json.data || [];
+            if (!people.length) {
+                listEl.innerHTML = '<div class="following-empty">You are not following anyone yet.</div>';
+                loaded = true;
+                return;
+            }
+            const items = people.map(p => `
+                <a class="following-item" href="/StoryHub/index.php?url=profile&id=${p.id}">
+                    <img class="following-avatar" src="public/images/${p.profile_image || 'default-avatar.jpg'}" alt="${p.username}">
+                    <div>
+                        <div class="following-name">${p.full_name || p.username}</div>
+                        <div class="following-username">@${p.username}</div>
+                    </div>
+                </a>
+            `).join('');
+            listEl.innerHTML = items;
+            loaded = true;
+        } catch (e) {
+            listEl.innerHTML = '<div class="following-empty">Could not load following.</div>';
+        }
+    }
+
+    trigger.addEventListener('mouseenter', loadFollowing, { once: true });
+    trigger.addEventListener('focusin', loadFollowing, { once: true });
+})();
+</script>

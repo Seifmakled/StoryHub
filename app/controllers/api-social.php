@@ -27,6 +27,36 @@ function requireAuth(?int $userId): void {
 
 try {
     if ($method === 'GET') {
+        // Following list for current user
+        if (isset($_GET['following_list'])) {
+            requireAuth($userId);
+            $stmt = $conn->prepare(
+                'SELECT u.id, u.username, u.full_name, u.profile_image, u.bio, u.created_at
+                 FROM follows f
+                 JOIN users u ON u.id = f.followee_id
+                 WHERE f.follower_id = ?
+                 ORDER BY u.username ASC'
+            );
+            $stmt->execute([$userId]);
+            echo json_encode(['data' => $stmt->fetchAll()]);
+            exit;
+        }
+
+        // Followers list for current user
+        if (isset($_GET['followers_list'])) {
+            requireAuth($userId);
+            $stmt = $conn->prepare(
+                'SELECT u.id, u.username, u.full_name, u.profile_image, u.bio, u.created_at
+                 FROM follows f
+                 JOIN users u ON u.id = f.follower_id
+                 WHERE f.followee_id = ?
+                 ORDER BY u.username ASC'
+            );
+            $stmt->execute([$userId]);
+            echo json_encode(['data' => $stmt->fetchAll()]);
+            exit;
+        }
+
         // Public comments listing for an article
         if (isset($_GET['article_id'])) {
             $articleId = (int)$_GET['article_id'];

@@ -25,6 +25,7 @@ $routes = [
     'notifications' => __DIR__ . '/app/views/notifications.php',
     'write' => __DIR__ . '/app/views/write.php',
     'logout' => __DIR__ . '/app/views/logout.php',
+    'following' => __DIR__ . '/app/views/following.php',
     'api-users' => __DIR__ . '/app/controllers/api-users.php',
     'api-me' => __DIR__ . '/app/controllers/api-me.php',
     'api-articles' => __DIR__ . '/app/controllers/api-articles.php',
