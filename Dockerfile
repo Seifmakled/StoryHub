@@ -1,6 +1,9 @@
 FROM php:8.2-apache
 
-# Enable rewrite only (safe)
+# Explicitly disable other MPMs (important)
+RUN a2dismod mpm_event mpm_worker || true
+
+# Enable rewrite (safe)
 RUN a2enmod rewrite
 
 # Copy project files
@@ -13,5 +16,6 @@ RUN chown -R www-data:www-data /var/www/html
 ENV PORT=8080
 EXPOSE 8080
 
-# Make Apache listen on Railway port
-RUN sed -i 's/80/${PORT}/g' /etc/apache2/ports.conf /etc/apache2/sites-enabled/000-default.conf
+# Apache listen on Railway port
+RUN sed -i "s/80/${PORT}/g" /etc/apache2/ports.conf \
+ && sed -i "s/80/${PORT}/g" /etc/apache2/sites-enabled/000-default.conf
