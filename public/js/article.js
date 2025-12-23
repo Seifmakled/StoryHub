@@ -16,6 +16,7 @@
     const likeBtn = qs('likeBtn');
     const saveBtn = qs('saveBtn');
     const followBtn = qs('followBtn');
+    const viewerId = (typeof window.CURRENT_USER_ID !== 'undefined') ? (Number(window.CURRENT_USER_ID) || null) : null;
     const likeCountEl = qs('likeCount');
     const saveLabel = qs('saveLabel');
     const commentsList = qs('commentsList');
@@ -59,7 +60,7 @@
             const a = data.data;
 
             currentArticleId = a.id;
-            authorId = a.user_id;
+            authorId = Number(a.user_id) || null;
 
             document.title = (a.title || 'Story') + ' - StoryHub';
             titleEl.textContent = a.title || 'Untitled';
@@ -82,8 +83,13 @@
             if (saveLabel) saveLabel.textContent = a.is_saved ? 'Saved' : 'Save';
             if (followBtn) {
                 const following = !!a.is_following_author;
-                followBtn.classList.toggle('active', following);
-                followBtn.textContent = following ? 'Following' : 'Follow';
+                if (viewerId && authorId && viewerId === authorId) {
+                    followBtn.style.display = 'none';
+                } else {
+                    followBtn.style.display = '';
+                    followBtn.classList.toggle('active', following);
+                    followBtn.textContent = following ? 'Following' : 'Follow';
+                }
             }
 
             if (tagsEl) {

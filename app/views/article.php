@@ -8,6 +8,10 @@ include __DIR__ . '/../partials/header.php';
 include __DIR__ . '/../partials/navbar.php';
 ?>
 
+<script>
+    window.CURRENT_USER_ID = <?php echo isset($_SESSION['user_id']) ? (int)$_SESSION['user_id'] : 'null'; ?>;
+</script>
+
 <div class="article-shell">
     <div class="article-hero" id="articleHero">
         <div class="article-cover" id="articleCover"></div>

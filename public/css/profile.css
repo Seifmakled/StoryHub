@@ -522,6 +522,68 @@ body {
     line-height: 1.6;
 }
 
+.settings-form {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+}
+
+.settings-form .form-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 1rem;
+}
+
+.settings-form .form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+}
+
+.settings-form label {
+    font-weight: 600;
+    color: var(--dark-color);
+    font-size: 0.95rem;
+}
+
+.settings-form input,
+.settings-form textarea {
+    width: 100%;
+    padding: 0.8rem 0.9rem;
+    border: 2px solid var(--border-color);
+    border-radius: 12px;
+    background: #fff;
+    color: var(--text-color);
+    font-size: 0.95rem;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.1s ease;
+}
+
+.settings-form textarea {
+    resize: vertical;
+    min-height: 120px;
+}
+
+.settings-form input:focus,
+.settings-form textarea:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.12);
+    transform: translateY(-1px);
+}
+
+.settings-form input::placeholder,
+.settings-form textarea::placeholder {
+    color: #94a3b8;
+}
+
+.settings-form .save-status {
+    display: inline-block;
+    margin-left: 0.75rem;
+    color: #16a34a;
+    font-weight: 600;
+    font-size: 0.95rem;
+}
+
 .social-links {
     display: flex;
     flex-direction: column;
