@@ -10,6 +10,7 @@
     const usernameEl = qs('#profileUsername');
     const bioWrap = qs('#profileBio p');
     const avatarEl = qs('#profileAvatar');
+    const coverEl = qs('#coverImage');
     const stats = {
         articles: qs('#statArticles'),
         followers: qs('#statFollowers'),
@@ -50,6 +51,9 @@
         bioWrap.textContent = u.bio || '';
         if (u.profile_image) {
             avatarEl.src = 'public/images/' + u.profile_image;
+        }
+        if (coverEl && u.cover_image) {
+            coverEl.src = 'public/images/' + u.cover_image;
         }
         stats.articles.textContent = data.counts.articles;
         if (stats.followers) stats.followers.textContent = data.counts.followers ?? 0;
@@ -285,20 +289,44 @@
     function setupProfileForm() {
         const form = qs('#profileForm');
         const status = qs('#profileSaveStatus');
+
+        const avatarInput = qs('#avatarInput');
+        const coverInput = qs('#coverInput');
+
+        if (avatarInput) {
+            avatarInput.addEventListener('change', () => {
+                const f = avatarInput.files && avatarInput.files[0];
+                if (!f) return;
+                avatarEl.src = URL.createObjectURL(f);
+            });
+        }
+
+        if (coverInput && coverEl) {
+            coverInput.addEventListener('change', () => {
+                const f = coverInput.files && coverInput.files[0];
+                if (!f) return;
+                coverEl.src = URL.createObjectURL(f);
+            });
+        }
+
         form.addEventListener('submit', async (e) => {
             e.preventDefault();
             status.textContent = 'Saving...';
             status.style.color = '';
-            const payload = {
-                full_name: qs('#fullName').value.trim(),
-                email: qs('#email').value.trim(),
-                bio: qs('#bio').value.trim()
-            };
             try {
                 const res = await fetch(base + 'index.php?url=api-me', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
+                    body: (() => {
+                        const fd = new FormData();
+                        fd.set('full_name', qs('#fullName').value.trim());
+                        fd.set('email', qs('#email').value.trim());
+                        fd.set('bio', qs('#bio').value.trim());
+                        const avatarFile = avatarInput && avatarInput.files ? avatarInput.files[0] : null;
+                        const coverFile = coverInput && coverInput.files ? coverInput.files[0] : null;
+                        if (avatarFile) fd.append('avatar', avatarFile);
+                        if (coverFile) fd.append('cover', coverFile);
+                        return fd;
+                    })()
                 });
                 if (!res.ok) {
                     const err = await res.json().catch(() => ({}));

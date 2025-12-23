@@ -20,7 +20,12 @@ include __DIR__ . '/../partials/navbar.php';
             </div>
         </div>
         <div class="hero-image">
-            <!-- <img src="public/images/hero-illustration.svg" alt="Writing illustration" onerror="this.src='public/images/placeholder-hero.jpg'"> -->        
+            <div class="hero-model" aria-label="StoryHub 3D preview">
+                <canvas id="storyhubModelCanvas"></canvas>
+                <div class="hero-model-fallback" id="storyhubModelFallback" hidden>
+                    3D preview unavailable.
+                </div>
+            </div>
         </div>
     </div>
 </section>

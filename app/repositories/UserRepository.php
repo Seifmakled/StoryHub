@@ -19,7 +19,7 @@ class UserRepository {
      * @throws PDOException If database query fails
      */
     public function findByEmailOrUsername(string $emailOrUsername): ?array {
-        $sql = "SELECT id, full_name, username, email, password, is_admin 
+        $sql = "SELECT id, full_name, username, email, password, is_admin, profile_image, cover_image 
                 FROM users 
                 WHERE email = ? OR username = ?";
         $stmt = $this->pdo->prepare($sql);
@@ -146,7 +146,7 @@ class UserRepository {
         $placeholders = [];
         $values = [];
 
-        $allowedFields = ['username', 'email', 'password', 'full_name', 'is_verified', 'is_admin', 'bio', 'profile_image'];
+        $allowedFields = ['username', 'email', 'password', 'full_name', 'is_verified', 'is_admin', 'bio', 'profile_image', 'cover_image'];
         
         foreach ($allowedFields as $field) {
             if (isset($data[$field])) {
@@ -179,7 +179,7 @@ class UserRepository {
         $fields = [];
         $values = [];
 
-        $allowedFields = ['full_name', 'bio', 'email', 'profile_image'];
+        $allowedFields = ['full_name', 'bio', 'email', 'profile_image', 'cover_image'];
         
         foreach ($allowedFields as $field) {
             if (isset($data[$field])) {

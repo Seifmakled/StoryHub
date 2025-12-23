@@ -106,6 +106,7 @@ class Database {
                     full_name TEXT NULL,
                     bio TEXT NULL,
                     profile_image TEXT NOT NULL DEFAULT "default-avatar.jpg",
+                    cover_image TEXT NULL,
                     is_admin INTEGER NOT NULL DEFAULT 0,
                     verification_code TEXT NULL,
                     is_verified INTEGER NOT NULL DEFAULT 0,
@@ -203,6 +204,7 @@ class Database {
                     `full_name` VARCHAR(100) NULL,
                     `bio` TEXT NULL,
                     `profile_image` VARCHAR(255) NOT NULL DEFAULT 'default-avatar.jpg',
+                    `cover_image` VARCHAR(255) NULL,
                     `is_admin` TINYINT(1) NOT NULL DEFAULT 0,
                     `verification_code` VARCHAR(6) NULL,
                     `is_verified` TINYINT(1) NOT NULL DEFAULT 0,
@@ -214,6 +216,17 @@ class Database {
                     INDEX (`username`)
                 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;"
             );
+
+            // Best-effort schema upgrade for existing MySQL databases.
+            // (CREATE TABLE IF NOT EXISTS will not add new columns.)
+            try {
+                $col = $pdo->query("SHOW COLUMNS FROM `users` LIKE 'cover_image'")->fetch();
+                if (!$col) {
+                    $pdo->exec("ALTER TABLE `users` ADD COLUMN `cover_image` VARCHAR(255) NULL AFTER `profile_image`");
+                }
+            } catch (Throwable $e) {
+                // Ignore upgrade errors.
+            }
 
             $execute(
                 "CREATE TABLE IF NOT EXISTS `articles` (

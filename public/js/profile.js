@@ -89,6 +89,12 @@
             avatarEl.src = 'public/images/' + u.profile_image;
         }
 
+        // Cover
+        const coverEl = qs('#coverImage');
+        if (coverEl && u.cover_image) {
+            coverEl.src = 'public/images/' + u.cover_image;
+        }
+
         // Joined
         const joinedEl = qs('#joinedText');
         if (joinedEl && u.created_at) {

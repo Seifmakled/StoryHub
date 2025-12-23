@@ -35,6 +35,8 @@ try {
         $_SESSION['user_id'] = $user['id'];
         $_SESSION['username'] = $user['username'];
         $_SESSION['full_name'] = $user['full_name'];
+        $_SESSION['profile_image'] = $user['profile_image'] ?? 'default-avatar.jpg';
+        $_SESSION['cover_image'] = $user['cover_image'] ?? null;
         $_SESSION['logged_in'] = true;
         
         // MODIFICATION 2: Store the is_admin status in the session.
